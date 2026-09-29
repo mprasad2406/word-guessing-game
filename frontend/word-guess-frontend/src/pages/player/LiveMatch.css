@@ -844,10 +844,222 @@
 
 .gameplay-input-section {
   width: 100%;
-  max-width: 480px;
+  max-width: 540px;
   margin: 0 auto;
   border-top: 1px solid #f1f5f9;
   padding-top: 16px;
+}
+
+/* ==========================================================================
+   7b. On-Screen Virtual QWERTY Keyboard
+   ========================================================================== */
+
+.virtual-keyboard-wrapper {
+  margin-top: 16px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.keyboard-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.btn-toggle-keyboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+}
+
+.btn-toggle-keyboard:hover {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+.keyboard-toggle-label {
+  font-weight: 600;
+}
+
+.keyboard-toggle-badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  text-transform: uppercase;
+}
+
+.keyboard-mini-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.kb-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.kb-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.kb-legend-dot.dot-correct {
+  background-color: #15803d;
+}
+
+.kb-legend-dot.dot-present {
+  background-color: #d97706;
+}
+
+.kb-legend-dot.dot-absent {
+  background-color: #475569;
+}
+
+.virtual-keyboard-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+}
+
+.virtual-keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.virtual-key {
+  flex: 1;
+  max-width: 44px;
+  min-width: 32px;
+  height: 48px;
+  border-radius: 7px;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  font-size: 0.9375rem; /* 15px */
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.12s ease;
+  padding: 0;
+}
+
+.virtual-key:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+}
+
+.virtual-key:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.virtual-key:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Color States: Green, Orange/Amber, Gray */
+.virtual-key.key-correct {
+  background-color: #15803d !important;
+  color: #ffffff !important;
+  border-color: #15803d !important;
+  box-shadow: 0 2px 6px rgba(21, 128, 61, 0.3) !important;
+}
+
+.virtual-key.key-present {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+  border-color: #d97706 !important;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3) !important;
+}
+
+.virtual-key.key-absent {
+  background-color: #475569 !important;
+  color: #ffffff !important;
+  border-color: #475569 !important;
+  opacity: 0.65;
+}
+
+/* Action Keys (Enter & Backspace) */
+.virtual-key.key-enter,
+.virtual-key.key-backspace {
+  flex: 1.5;
+  max-width: 68px;
+  min-width: 48px;
+  font-size: 0.75rem;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.virtual-key.key-enter:hover:not(:disabled),
+.virtual-key.key-backspace:hover:not(:disabled) {
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.key-action-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+@media (max-width: 576px) {
+  .virtual-key {
+    height: 42px;
+    font-size: 0.8125rem;
+    min-width: 26px;
+  }
+  .virtual-key.key-enter,
+  .virtual-key.key-backspace {
+    font-size: 0.6875rem;
+    min-width: 42px;
+  }
+  .keyboard-mini-legend {
+    display: none;
+  }
 }
 
 .live-guess-form {

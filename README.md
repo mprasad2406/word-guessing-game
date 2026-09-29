@@ -1,4 +1,4 @@
-# <img src="https://api.iconify.design/lucide:gamepad-2.svg?color=%234f46e5" width="34" height="34" style="vertical-align: middle; margin-right: 8px;" /> Word Guessing Game (Enterprise Full-Stack Platform)
+# <img src="https://api.iconify.design/lucide:gamepad-2.svg?color=%234f46e5" width="34" height="34" style="vertical-align: middle; margin-right: 8px;" /> Word Guessing Game 
 
 <p align="left">
   <img src="https://img.shields.io/badge/Python-3.12%2B-blue.svg?logo=python&logoColor=white" alt="Python" />
@@ -37,20 +37,90 @@ An enterprise-grade, asynchronous **Word Guessing Game** platform built using **
 
 ## <img src="https://api.iconify.design/lucide:camera.svg?color=%233b82f6" width="22" height="22" style="vertical-align: middle;" /> Visual Showcase & Screenshots
 
->
+> <img src="https://api.iconify.design/lucide:info.svg?color=%233b82f6" width="16" height="16" style="vertical-align: middle;" /> Place your application screenshots inside the [`docs/images/`](docs/images/) directory using the designated filenames below.
 
-| Preview Card | View Description |
-| :--- | :--- |
-| ![Hero Banner](docs/images/hero-banner.png) | **Platform Overview & Landing Banner** — Main branding and overview preview. |
-| ![Player Lobby](docs/images/player-lobby.png) | **Player Dashboard & Lobby** — Lifetime records, win rate percentage, active streaks, and quick match launcher. |
-| ![Live Gameplay](docs/images/gameplay-screen.png) | **Active Gameplay Arena** — 6-row animated tile grid, real-time letter validation, and synced virtual keyboard. |
-| ![Game Over Modal](docs/images/game-summary-modal.png) | **Post-Game Summary Modal** — Victory/Defeat breakdown, target word reveal, time elapsed, and replay button. |
-| ![Match History](docs/images/game-history.png) | **Match History & Records** — Paginated match table, status filters (`WON`, `LOST`, `EXPIRED`), and timeline inspection. |
-| ![Admin Dashboard](docs/images/admin-dashboard.png) | **Admin Metrics Center** — Real-time active match counters, user counts, victory ratios, and visual charts. |
-| ![User Management](docs/images/admin-user-management.png) | **User Moderation Portal** — User table, search filters, role switcher (`PLAYER` / `ADMIN`), and account status controls. |
-| ![Word Management](docs/images/admin-word-management.png) | **Word Dictionary Manager** — Word inventory, status toggling (`Active` / `Inactive`), and dictionary creation modals. |
-| ![Analytics & PDF Reports](docs/images/admin-reports-analytics.png) | **Analytics & PDF Exports** — Custom date ranges, interactive performance tables, and single-click PDF downloads. |
-| ![System Settings](docs/images/admin-system-settings.png) | **System Configuration Panel** — Dynamic match timeouts, attempt rules, and security controls. |
+### <img src="https://api.iconify.design/lucide:layout.svg?color=%232563eb" width="18" height="18" style="vertical-align: middle;" /> 1. Landing Page & Player Lobby
+The primary entry points providing modern gaming presentation, lifetime player performance cards, winning streak indicators, and quick match launching.
+
+<div align="center">
+  <img src="docs/images/hero-banner.png" alt="Platform Landing Page" width="90%" />
+  <p><em>Figure 1.1: Modern Landing Page with interactive rules and real-time word evaluation demo.</em></p>
+</div>
+
+<br />
+
+<div align="center">
+  <img src="docs/images/player-lobby.png" alt="Player Dashboard & Lobby" width="90%" />
+  <p><em>Figure 1.2: Player Lobby displaying win rate charts, streak tracking, and active session launcher.</em></p>
+</div>
+
+---
+
+### <img src="https://api.iconify.design/lucide:gamepad-2.svg?color=%2315803d" width="18" height="18" style="vertical-align: middle;" /> 2. Live Match Arena & On-Screen QWERTY Keyboard
+Active gameplay board featuring 6 guess rows, dynamic letter flip transitions, tile feedback, and a full on-screen virtual QWERTY keyboard with real-time color tracking (Green = Correct, Orange = In Word, Gray = Absent).
+
+<div align="center">
+  <img src="docs/images/gameplay-screen.png" alt="Active Gameplay Screen with Keyboard" width="90%" />
+  <p><em>Figure 2.1: Live match interface with interactive letter grid and synchronized QWERTY keyboard.</em></p>
+</div>
+
+---
+
+### <img src="https://api.iconify.design/lucide:history.svg?color=%23d97706" width="18" height="18" style="vertical-align: middle;" /> 3. Match Evaluation & History Records
+Post-match victory/defeat dialog with performance statistics, target word reveals, and a paginated game history explorer with detailed guess-by-guess inspection.
+
+<div align="center">
+  <img src="docs/images/game-summary-modal.png" alt="Post-Match Summary Modal" width="85%" />
+  <p><em>Figure 3.1: Post-match modal breaking down attempts used, duration in seconds, and target word reveal.</em></p>
+</div>
+
+<br />
+
+<div align="center">
+  <img src="docs/images/game-history.png" alt="Player Match History" width="90%" />
+  <p><em>Figure 3.2: Filterable match history log displaying game outcomes, duration, and guess sequences.</em></p>
+</div>
+
+---
+
+### <img src="https://api.iconify.design/lucide:shield-check.svg?color=%237c3aed" width="18" height="18" style="vertical-align: middle;" /> 4. Admin Operations & Management
+Administrative control center for platform metrics, user moderation (role management and status toggling), and 5-letter word dictionary inventory controls.
+
+<div align="center">
+  <img src="docs/images/admin-dashboard.png" alt="Admin Dashboard Overview" width="90%" />
+  <p><em>Figure 4.1: Executive Dashboard with KPI cards, live game counters, and outcome distribution graphs.</em></p>
+</div>
+
+<br />
+
+<div align="center">
+  <img src="docs/images/admin-user-management.png" alt="User Management Portal" width="90%" />
+  <p><em>Figure 4.2: User Management table with role switching (Player/Admin) and account status moderation.</em></p>
+</div>
+
+<br />
+
+<div align="center">
+  <img src="docs/images/admin-word-management.png" alt="Word Dictionary Management" width="90%" />
+  <p><em>Figure 4.3: Word Management portal for adding, activating, and updating the dictionary inventory.</em></p>
+</div>
+
+---
+
+### <img src="https://api.iconify.design/lucide:file-text.svg?color=%23ef4444" width="18" height="18" style="vertical-align: middle;" /> 5. Analytics, PDF Exports & System Configuration
+Comprehensive daily performance reporting, player dossiers, single-click downloadable PDF report generation, and dynamic game rule settings.
+
+<div align="center">
+  <img src="docs/images/admin-reports-analytics.png" alt="Admin Analytics and PDF Reports" width="90%" />
+  <p><em>Figure 5.1: Daily and player performance reporting with instant PDF export generation.</em></p>
+</div>
+
+<br />
+
+<div align="center">
+  <img src="docs/images/admin-system-settings.png" alt="System Settings and Security" width="90%" />
+  <p><em>Figure 5.2: Dynamic game rule configuration controlling max attempts and session timeouts.</em></p>
+</div>
 
 ---
 
@@ -144,14 +214,14 @@ An enterprise-grade, asynchronous **Word Guessing Game** platform built using **
 
 ```mermaid
 flowchart TD
-    subgraph ClientLayer["🖥️ Frontend (React 18 + Vite)"]
+    subgraph ClientLayer["Frontend (React 18 + Vite)"]
         UI["React UI (Bootstrap 5.3 + Lucide)"]
         Router["React Router v7 (RBAC Guards)"]
         AxiosClient["Axios Client (JWT Interceptor)"]
         UI --> Router --> AxiosClient
     end
 
-    subgraph APILayer["⚡ API Gateway (FastAPI Async)"]
+    subgraph APILayer["API Gateway (FastAPI Async)"]
         AuthMiddleware["JWT Auth & Role Guard"]
         RateLimiter["SlowAPI Rate Limiter"]
         Routers["Endpoints (/auth, /game, /admin)"]
@@ -159,7 +229,7 @@ flowchart TD
         AuthMiddleware --> RateLimiter --> Routers
     end
 
-    subgraph ServiceLayer["⚙️ Business Logic & Services"]
+    subgraph ServiceLayer["Business Logic & Services"]
         GameService["GameEngineService"]
         AdminService["AdminReportsService"]
         UserService["UserService"]
@@ -170,7 +240,7 @@ flowchart TD
         AdminService --> PDFService
     end
 
-    subgraph DataLayer["🗄️ Persistence Layer"]
+    subgraph DataLayer["Persistence Layer"]
         Repo["SQLAlchemy 2.0 Async Repositories"]
         DB[("MySQL / SQLite Database")]
         GameService --> Repo

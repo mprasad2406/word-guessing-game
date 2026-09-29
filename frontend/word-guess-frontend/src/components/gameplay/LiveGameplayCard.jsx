@@ -4,13 +4,14 @@ import { DraftToolbar } from "./DraftToolbar";
 import { IntelligentSuggestionBanner } from "./IntelligentSuggestionBanner";
 import { LiveGuessBoard } from "./LiveGuessBoard";
 import { LiveGuessInput } from "./LiveGuessInput";
+import { VirtualKeyboard } from "./VirtualKeyboard";
 import { useGuessDraft } from "../../hooks/useGuessDraft";
 
 /**
  * LiveGameplayCard:
  * Unified gameplay card combining the target word instruction banner,
  * feedback suggestion banner, draft editing toolbar, directly editable interactive board,
- * synchronized text field, and submit action.
+ * synchronized text field, on-screen QWERTY virtual keyboard, and submit action.
  */
 export function LiveGameplayCard({
   gameState,
@@ -71,6 +72,46 @@ export function LiveGameplayCard({
 
   const handlePrepareFromFeedback = () => {
     prepareFromFeedback(guesses);
+  };
+
+  // Virtual keyboard click handler
+  const handleVirtualKeyPress = (char) => {
+    if (!isGameActive || isSubmittingGuess) return;
+    const upperChar = char.toUpperCase();
+    if (draft.length < word_length) {
+      const next = draft + upperChar;
+      setDraft(next, true);
+      selectTile(Math.min(word_length - 1, next.length));
+    } else if (selectedTileIndex !== null && selectedTileIndex < word_length) {
+      const arr = draft.split("");
+      arr[selectedTileIndex] = upperChar;
+      setDraft(arr.join(""), true);
+      selectTile(Math.min(word_length - 1, selectedTileIndex + 1));
+    }
+  };
+
+  // Virtual keyboard backspace handler
+  const handleVirtualBackspace = () => {
+    if (!isGameActive || isSubmittingGuess) return;
+    if (draft.length > 0) {
+      const next = draft.slice(0, -1);
+      setDraft(next, true);
+      selectTile(Math.max(0, next.length));
+    }
+  };
+
+  // Virtual keyboard submit handler
+  const handleVirtualSubmit = async () => {
+    if (!isGameActive || isSubmittingGuess) return;
+    const cleanDraft = draft.trim();
+    if (cleanDraft.length !== word_length) {
+      triggerShake();
+      return;
+    }
+    const success = await onGuessSubmit(cleanDraft);
+    if (success) {
+      reset();
+    }
   };
 
   return (
@@ -148,6 +189,16 @@ export function LiveGameplayCard({
             disabled={!isGameActive}
             previousGuesses={guesses}
             onTriggerShake={triggerShake}
+          />
+
+          {/* 6. On-Screen Virtual QWERTY Keyboard with dynamic color marking */}
+          <VirtualKeyboard
+            guesses={guesses}
+            onKeyClick={handleVirtualKeyPress}
+            onBackspace={handleVirtualBackspace}
+            onSubmit={handleVirtualSubmit}
+            disabled={!isGameActive}
+            isSubmitting={isSubmittingGuess}
           />
         </div>
       )}
