@@ -7,9 +7,6 @@ export function AdminLayout() {
     <div className="app-layout admin-theme">
       <Navbar />
       <main className="main-content-container">
-        <div className="admin-banner-notice">
-          <span>🔒 Administrator Control Panel</span>
-        </div>
         <Outlet />
       </main>
     </div>

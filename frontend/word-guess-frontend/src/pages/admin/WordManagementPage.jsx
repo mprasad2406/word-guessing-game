@@ -1,31 +1,54 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { toast } from "react-toastify";
-import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
-import { ConfirmDeleteModal } from "../../components/admin/ConfirmDeleteModal";
-import { WordModal } from "../../components/admin/WordModal";
-import { PageLoader } from "../../components/common/PageLoader";
 import { wordService } from "../../services/wordService";
+import { WordPageHeader } from "../../components/admin/words/WordPageHeader";
+import { WordSummaryStrip } from "../../components/admin/words/WordSummaryStrip";
+import { WordFilterToolbar } from "../../components/admin/words/WordFilterToolbar";
+import { WordTable } from "../../components/admin/words/WordTable";
+import { WordPagination } from "../../components/admin/words/WordPagination";
+import { WordModal } from "../../components/admin/words/WordModal";
+import { WordDeleteModal } from "../../components/admin/words/WordDeleteModal";
+import "./WordManagement.css";
 
+const DIFFICULTY_RANK = {
+  EASY: 1,
+  MEDIUM: 2,
+  HARD: 3,
+};
+
+/**
+ * WordManagementPage:
+ * Comprehensive Word Management Dashboard with full-dataset search,
+ * multi-column sorting, filter controls, pagination, and administrative CRUD.
+ */
 export function WordManagementPage() {
-  const [wordData, setWordData] = useState({
-    items: [],
-    total: 0,
-    page: 1,
-    page_size: 20,
-    pages: 1,
-  });
-
-  const [activeFilter, setActiveFilter] = useState("ALL");
-  const [difficultyFilter, setDifficultyFilter] = useState("ALL");
-  const [currentPage, setCurrentPage] = useState(1);
+  // Full dataset loaded from API
+  const [allWords, setAllWords] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Modal states
+  // Filters & search
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [difficultyFilter, setDifficultyFilter] = useState("ALL");
+
+  // Sorting
+  const [sortField, setSortField] = useState("id");
+  const [sortDirection, setSortDirection] = useState("desc");
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // Summary metrics state
+  const [summaryStats, setSummaryStats] = useState({ total: 0, active: 0, inactive: 0 });
+
+  // Add / Edit Modal state
   const [isWordModalOpen, setIsWordModalOpen] = useState(false);
   const [editingWord, setEditingWord] = useState(null);
   const [isSavingWord, setIsSavingWord] = useState(false);
 
+  // Deactivate / Delete Modal state
   const [deleteModalState, setDeleteModalState] = useState({
     isOpen: false,
     word: null,
@@ -33,57 +56,174 @@ export function WordManagementPage() {
   });
   const [isProcessingDelete, setIsProcessingDelete] = useState(false);
 
-  const loadWords = async () => {
+  // Fetch words dataset from server
+  const loadWordsData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const isActiveParam =
-        activeFilter === "ALL" ? null : activeFilter === "ACTIVE";
-      const difficultyParam =
-        difficultyFilter === "ALL" ? null : difficultyFilter;
+      const data = await wordService.fetchAllWords();
+      const items = Array.isArray(data?.items) ? data.items : [];
 
-      const data = await wordService.listWords({
-        isActive: isActiveParam,
-        difficulty: difficultyParam,
-        page: currentPage,
-        pageSize: 20,
-      });
+      setAllWords(items);
 
-      setWordData(data);
+      // Compute overview counts
+      const total = items.length;
+      const active = items.filter((w) => w.is_active).length;
+      const inactive = total - active;
+
+      setSummaryStats({ total, active, inactive });
     } catch (err) {
-      console.error("Failed to load words:", err);
+      console.error("Failed to load words dictionary:", err);
       setError(err?.message || "Failed to load words from server.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadWords();
-  }, [activeFilter, difficultyFilter, currentPage]);
+    loadWordsData();
+  }, [loadWordsData]);
 
+  // Filter and sort the full dataset
+  const filteredAndSortedWords = useMemo(() => {
+    let result = [...allWords];
+
+    // 1. Status Filter
+    if (statusFilter === "ACTIVE") {
+      result = result.filter((w) => w.is_active);
+    } else if (statusFilter === "INACTIVE") {
+      result = result.filter((w) => !w.is_active);
+    }
+
+    // 2. Difficulty Filter
+    if (difficultyFilter !== "ALL") {
+      result = result.filter(
+        (w) => String(w.difficulty).toUpperCase() === difficultyFilter
+      );
+    }
+
+    // 3. Search Filter
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase().trim();
+      result = result.filter((w) => {
+        const wordMatch = (w.word || "").toLowerCase().includes(query);
+        const hintMatch = (w.hint || "").toLowerCase().includes(query);
+        return wordMatch || hintMatch;
+      });
+    }
+
+    // 4. Column Sorting
+    result.sort((a, b) => {
+      let comparison = 0;
+
+      if (sortField === "word") {
+        comparison = (a.word || "").localeCompare(b.word || "");
+      } else if (sortField === "difficulty") {
+        const rankA = DIFFICULTY_RANK[a.difficulty] || 0;
+        const rankB = DIFFICULTY_RANK[b.difficulty] || 0;
+        comparison = rankA - rankB;
+      } else if (sortField === "hint") {
+        comparison = (a.hint || "").localeCompare(b.hint || "");
+      } else {
+        // default by internal ID
+        const idA = a.id ?? 0;
+        const idB = b.id ?? 0;
+        comparison = idA - idB;
+      }
+
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+
+    return result;
+  }, [allWords, statusFilter, difficultyFilter, searchTerm, sortField, sortDirection]);
+
+  // Total matching count after filters
+  const totalMatching = filteredAndSortedWords.length;
+
+  // Total pages
+  const totalPages = Math.max(1, Math.ceil(totalMatching / pageSize));
+
+  // Current page records slice
+  const paginatedWords = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredAndSortedWords.slice(startIndex, startIndex + pageSize);
+  }, [filteredAndSortedWords, currentPage, pageSize]);
+
+  // Reset current page if out of bounds after filtering
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  // Handler: Column Sort Click
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+    setCurrentPage(1);
+  };
+
+  // Handler: Search Change
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  // Handler: Status Filter Change
+  const handleStatusChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    setCurrentPage(1);
+  };
+
+  // Handler: Difficulty Filter Change
+  const handleDifficultyChange = (newDifficulty) => {
+    setDifficultyFilter(newDifficulty);
+    setCurrentPage(1);
+  };
+
+  // Handler: Clear All Filters
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("ALL");
+    setDifficultyFilter("ALL");
+    setCurrentPage(1);
+  };
+
+  // Handler: Page Size Change
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
+
+  // Handler: Add Word
   const handleCreateNewWord = () => {
     setEditingWord(null);
     setIsWordModalOpen(true);
   };
 
+  // Handler: Edit Word
   const handleEditWord = (word) => {
     setEditingWord(word);
     setIsWordModalOpen(true);
   };
 
+  // Handler: Save (Create or Update) Word
   const handleSaveWord = async (payload, wordId) => {
     setIsSavingWord(true);
     try {
       if (wordId) {
         await wordService.updateWord(wordId, payload);
-        toast.success(`Word '${payload.word}' updated successfully!`);
+        toast.success(`Word "${payload.word.toUpperCase()}" updated successfully!`);
       } else {
         await wordService.createWord(payload);
-        toast.success(`Word '${payload.word}' created successfully!`);
+        toast.success(`Word "${payload.word.toUpperCase()}" added to dictionary!`);
       }
-      await loadWords();
+      await loadWordsData();
       return true;
     } catch (err) {
       const errMsg = err?.message || "Failed to save word.";
@@ -94,26 +234,28 @@ export function WordManagementPage() {
     }
   };
 
+  // Handler: Toggle Active / Inactive
   const handleToggleActive = async (word) => {
     if (word.is_active) {
-      // Open modal to confirm deactivation
+      // Prompt deactivation modal
       setDeleteModalState({
         isOpen: true,
         word,
         isPermanent: false,
       });
     } else {
-      // Re-activate word immediately
+      // Re-activate immediately
       try {
         await wordService.updateWord(word.id, { is_active: true });
-        toast.success(`Word '${word.word}' activated!`);
-        await loadWords();
+        toast.success(`Word "${word.word.toUpperCase()}" activated for gameplay!`);
+        await loadWordsData();
       } catch (err) {
         toast.error(err?.message || "Failed to activate word.");
       }
     }
   };
 
+  // Handler: Open Permanent Delete Modal
   const handleOpenPermanentDelete = (word) => {
     setDeleteModalState({
       isOpen: true,
@@ -122,17 +264,18 @@ export function WordManagementPage() {
     });
   };
 
+  // Handler: Confirm Deactivation or Permanent Deletion
   const handleConfirmDeleteAction = async (wordId, securityKey) => {
     setIsProcessingDelete(true);
     try {
       if (deleteModalState.isPermanent) {
         await wordService.permanentDeleteWord(wordId, securityKey);
-        toast.success("Word permanently removed from dictionary!");
+        toast.success("Word permanently removed from dictionary.");
       } else {
         await wordService.deactivateWord(wordId);
         toast.success("Word deactivated successfully.");
       }
-      await loadWords();
+      await loadWordsData();
       return true;
     } catch (err) {
       const errMsg = err?.message || "Operation failed.";
@@ -143,277 +286,66 @@ export function WordManagementPage() {
     }
   };
 
-  const getDifficultyBadge = (difficulty) => {
-    switch (difficulty) {
-      case "EASY":
-        return <span className="badge bg-success-subtle text-success border border-success-subtle">Easy</span>;
-      case "HARD":
-        return <span className="badge bg-danger-subtle text-danger border border-danger-subtle">Hard</span>;
-      case "MEDIUM":
-      default:
-        return <span className="badge bg-warning-subtle text-warning border border-warning-subtle">Medium</span>;
-    }
-  };
+  const isFiltered =
+    Boolean(searchTerm) || statusFilter !== "ALL" || difficultyFilter !== "ALL";
 
   return (
-    <div className="container-fluid py-4 px-md-4">
-      {/* Page Header */}
-      <AdminPageHeader
-        title="Word Management"
-        subtitle="Manage vocabulary words, hints, difficulty levels, and availability for gameplay sessions."
-        breadcrumbItem="Words"
-        actions={
-          <button
-            type="button"
-            className="btn btn-primary d-inline-flex align-items-center gap-2"
-            onClick={handleCreateNewWord}
-          >
-            <i className="bi bi-plus-circle"></i>
-            <span>Add Word</span>
-          </button>
-        }
+    <div className="word-management-container" role="main" aria-label="Word Management Dashboard">
+      {/* 1. Page Header */}
+      <WordPageHeader onAddWordClick={handleCreateNewWord} />
+
+      {/* 2. Compact Horizontal Dictionary Summary Strip */}
+      <WordSummaryStrip summary={summaryStats} isLoading={isLoading} />
+
+      {/* 3. Search & Filter Toolbar */}
+      <WordFilterToolbar
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+        statusFilter={statusFilter}
+        onStatusChange={handleStatusChange}
+        difficultyFilter={difficultyFilter}
+        onDifficultyChange={handleDifficultyChange}
+        onClearFilters={handleClearFilters}
+        totalMatching={totalMatching}
+        isLoading={isLoading}
       />
 
-      {/* Filter Controls */}
-      <div className="card shadow-sm border-0 rounded-3 mb-4">
-        <div className="card-body p-3">
-          <div className="row g-3 align-items-center">
-            {/* Status Filter */}
-            <div className="col-12 col-md-auto d-flex align-items-center gap-2">
-              <span className="small text-muted fw-semibold">Status:</span>
-              <div className="btn-group btn-group-sm" role="group">
-                <button
-                  type="button"
-                  className={`btn ${activeFilter === "ALL" ? "btn-primary" : "btn-outline-secondary"}`}
-                  onClick={() => {
-                    setActiveFilter("ALL");
-                    setCurrentPage(1);
-                  }}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${activeFilter === "ACTIVE" ? "btn-primary" : "btn-outline-secondary"}`}
-                  onClick={() => {
-                    setActiveFilter("ACTIVE");
-                    setCurrentPage(1);
-                  }}
-                >
-                  Active
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${activeFilter === "INACTIVE" ? "btn-primary" : "btn-outline-secondary"}`}
-                  onClick={() => {
-                    setActiveFilter("INACTIVE");
-                    setCurrentPage(1);
-                  }}
-                >
-                  Inactive
-                </button>
-              </div>
-            </div>
-
-            {/* Difficulty Filter */}
-            <div className="col-12 col-md-auto d-flex align-items-center gap-2">
-              <span className="small text-muted fw-semibold">Difficulty:</span>
-              <div className="btn-group btn-group-sm" role="group">
-                {["ALL", "EASY", "MEDIUM", "HARD"].map((diff) => (
-                  <button
-                    key={diff}
-                    type="button"
-                    className={`btn ${difficultyFilter === diff ? "btn-primary" : "btn-outline-secondary"}`}
-                    onClick={() => {
-                      setDifficultyFilter(diff);
-                      setCurrentPage(1);
-                    }}
-                  >
-                    {diff === "ALL" ? "All" : diff.charAt(0) + diff.slice(1).toLowerCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Error Banner */}
+      {/* 4. Error Banner */}
       {error && (
-        <div className="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
-          <i className="bi bi-exclamation-triangle-fill"></i>
-          <div>{error}</div>
+        <div className="form-error-banner" role="alert">
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Word Table */}
-      <div className="card shadow-sm border-0 rounded-3 overflow-hidden">
-        {isLoading ? (
-          <div className="p-5">
-            <PageLoader text="Loading words dictionary..." />
-          </div>
-        ) : wordData.items.length === 0 ? (
-          <div className="text-center py-5 px-3">
-            <i className="bi bi-book fs-1 text-secondary opacity-50 d-block mb-3"></i>
-            <h5 className="fw-semibold text-secondary">No words found</h5>
-            <p className="text-muted small mb-4">
-              No words match the selected filter criteria. Try changing filters or add a new word.
-            </p>
-            <button
-              type="button"
-              className="btn btn-primary px-4"
-              onClick={handleCreateNewWord}
-            >
-              <i className="bi bi-plus-circle me-2"></i>Add First Word
-            </button>
-          </div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
-              <thead className="table-light text-secondary small text-uppercase">
-                <tr>
-                  <th scope="col" className="ps-4">ID</th>
-                  <th scope="col">Word</th>
-                  <th scope="col">Length</th>
-                  <th scope="col">Difficulty</th>
-                  <th scope="col">Hint / Clue</th>
-                  <th scope="col">Status</th>
-                  <th scope="col" className="text-end pe-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {wordData.items.map((word) => (
-                  <tr key={word.id} className={!word.is_active ? "opacity-75 bg-light" : ""}>
-                    <td className="ps-4 font-monospace text-muted small">#{word.id}</td>
-                    <td>
-                      <span className="font-monospace fw-bold text-uppercase fs-6 text-dark">
-                        {word.word}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="badge bg-light text-dark border">
-                        {word.word.length} letters
-                      </span>
-                    </td>
-                    <td>{getDifficultyBadge(word.difficulty)}</td>
-                    <td>
-                      {word.hint ? (
-                        <span className="small text-secondary text-truncate d-inline-block" style={{ maxWidth: "250px" }} title={word.hint}>
-                          {word.hint}
-                        </span>
-                      ) : (
-                        <span className="text-muted small fst-italic">None</span>
-                      )}
-                    </td>
-                    <td>
-                      {word.is_active ? (
-                        <span className="badge bg-success-subtle text-success border border-success-subtle">
-                          <i className="bi bi-check-circle-fill me-1"></i> Active
-                        </span>
-                      ) : (
-                        <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
-                          <i className="bi bi-pause-circle-fill me-1"></i> Inactive
-                        </span>
-                      )}
-                    </td>
-                    <td className="text-end pe-4">
-                      <div className="btn-group btn-group-sm">
-                        <button
-                          type="button"
-                          className="btn btn-outline-secondary"
-                          title="Edit word details"
-                          onClick={() => handleEditWord(word)}
-                        >
-                          <i className="bi bi-pencil"></i>
-                        </button>
-                        <button
-                          type="button"
-                          className={`btn ${word.is_active ? "btn-outline-warning" : "btn-outline-success"}`}
-                          title={word.is_active ? "Deactivate word" : "Activate word"}
-                          onClick={() => handleToggleActive(word)}
-                        >
-                          <i className={`bi ${word.is_active ? "bi-pause-fill" : "bi-play-fill"}`}></i>
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-outline-danger"
-                          title="Permanently delete word"
-                          onClick={() => handleOpenPermanentDelete(word)}
-                        >
-                          <i className="bi bi-trash3"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      {/* 5. 4-Column Words Data Table with Sorting */}
+      <WordTable
+        words={paginatedWords}
+        isLoading={isLoading}
+        isFiltered={isFiltered}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+        onClearFilters={handleClearFilters}
+        onAddWord={handleCreateNewWord}
+        onEditWord={handleEditWord}
+        onToggleActive={handleToggleActive}
+        onDeleteWord={handleOpenPermanentDelete}
+      />
 
-        {/* Pagination Footer */}
-        {!isLoading && wordData.pages > 1 && (
-          <div className="card-footer bg-white border-top py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div className="small text-muted">
-              Showing page <strong>{wordData.page}</strong> of <strong>{wordData.pages}</strong> ({wordData.total} words total)
-            </div>
+      {/* 6. Pagination Footer */}
+      {!isLoading && (
+        <WordPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalMatching}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={handlePageSizeChange}
+          isLoading={isLoading}
+        />
+      )}
 
-            <nav aria-label="Words pagination">
-              <ul className="pagination pagination-sm mb-0">
-                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                  <button
-                    type="button"
-                    className="page-link"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </button>
-                </li>
-
-                {Array.from({ length: wordData.pages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === wordData.pages || Math.abs(p - currentPage) <= 2)
-                  .map((pageNum, idx, arr) => {
-                    const prev = arr[idx - 1];
-                    const showEllipsis = prev && pageNum - prev > 1;
-
-                    return (
-                      <React.Fragment key={pageNum}>
-                        {showEllipsis && (
-                          <li className="page-item disabled">
-                            <span className="page-link">...</span>
-                          </li>
-                        )}
-                        <li className={`page-item ${currentPage === pageNum ? "active" : ""}`}>
-                          <button
-                            type="button"
-                            className="page-link"
-                            onClick={() => setCurrentPage(pageNum)}
-                          >
-                            {pageNum}
-                          </button>
-                        </li>
-                      </React.Fragment>
-                    );
-                  })}
-
-                <li className={`page-item ${currentPage === wordData.pages ? "disabled" : ""}`}>
-                  <button
-                    type="button"
-                    className="page-link"
-                    onClick={() => setCurrentPage((p) => Math.min(wordData.pages, p + 1))}
-                    disabled={currentPage === wordData.pages}
-                  >
-                    Next
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        )}
-      </div>
-
-      {/* Word Create/Edit Modal */}
+      {/* 7. Add / Edit Word Modal */}
       <WordModal
         isOpen={isWordModalOpen}
         onClose={() => setIsWordModalOpen(false)}
@@ -422,8 +354,8 @@ export function WordManagementPage() {
         isSaving={isSavingWord}
       />
 
-      {/* Deactivate / Permanent Delete Modal */}
-      <ConfirmDeleteModal
+      {/* 8. Deactivate / Permanent Delete Confirmation Modal */}
+      <WordDeleteModal
         isOpen={deleteModalState.isOpen}
         onClose={() => setDeleteModalState({ isOpen: false, word: null, isPermanent: false })}
         onConfirm={handleConfirmDeleteAction}

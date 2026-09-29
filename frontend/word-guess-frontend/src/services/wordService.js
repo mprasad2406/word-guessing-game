@@ -32,6 +32,40 @@ export const wordService = {
   },
 
   /**
+   * Fetch all words across all pages for comprehensive filtering and sorting.
+   * @param {Object} [options]
+   * @param {boolean|null} [options.isActive]
+   * @param {string|null} [options.difficulty]
+   * @returns {Promise<{ items: Array<any>, total: number }>}
+   */
+  async fetchAllWords({ isActive = null, difficulty = null } = {}) {
+    let allItems = [];
+    let page = 1;
+    let totalPages = 1;
+    let totalCount = 0;
+
+    while (page <= totalPages && page <= 20) {
+      const res = await this.listWords({
+        isActive,
+        difficulty,
+        page,
+        pageSize: 100,
+      });
+
+      if (res && Array.isArray(res.items)) {
+        allItems = allItems.concat(res.items);
+        totalCount = res.total || allItems.length;
+        totalPages = res.pages || 1;
+      } else {
+        break;
+      }
+      page++;
+    }
+
+    return { items: allItems, total: totalCount };
+  },
+
+  /**
    * Get single word by ID.
    * @param {number|string} wordId
    * @returns {Promise<any>}
