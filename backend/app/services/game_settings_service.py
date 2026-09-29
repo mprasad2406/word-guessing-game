@@ -35,7 +35,7 @@ class GameSettingsService:
         """
         Update global game settings.
         Requires admin security key if modifying critical settings
-        (max_attempts, min_word_length, max_word_length, scoring_multiplier, game_enabled).
+        (max_attempts, max_hints, min_word_length, max_word_length, scoring_multiplier, daily_word_limit, time_limit_seconds, default_difficulty, game_enabled).
         """
         if payload.modifies_critical_fields():
             await self.security_service.verify_security_key(payload.security_key)

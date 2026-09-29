@@ -18,21 +18,15 @@ import { UnauthorizedPage } from "../pages/errors/UnauthorizedPage";
 import { ActiveGamePage } from "../pages/player/ActiveGamePage";
 import { GameHistoryPage } from "../pages/player/GameHistoryPage";
 import { PlayerHomePage } from "../pages/player/PlayerHomePage";
+import { LandingPage } from "../pages/landing/LandingPage";
 import { useAuth } from "../context/AuthContext";
 import { RoleBasedRoute } from "./RoleBasedRoute";
-
-function HomeRedirect() {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return null;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return <Navigate to={user?.role === "ADMIN" ? "/admin" : "/player"} replace />;
-}
 
 export function AppRouter() {
   return (
     <Routes>
-      {/* Root redirect based on auth status */}
-      <Route path="/" element={<HomeRedirect />} />
+      {/* Modern Landing Page at root */}
+      <Route path="/" element={<LandingPage />} />
 
       {/* Public routes */}
       <Route element={<PublicLayout />}>

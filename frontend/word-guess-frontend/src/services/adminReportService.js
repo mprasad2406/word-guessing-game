@@ -135,13 +135,23 @@ export const adminReportService = {
    * @param {string|null} [options.date]
    * @param {string|null} [options.startDate]
    * @param {string|null} [options.endDate]
+   * @param {boolean} [options.summaryOnly]
+   * @param {string|null} [options.password]
    * @returns {Promise<string>} Downloaded filename
    */
-  async downloadDailyPdfReport({ date = null, startDate = null, endDate = null } = {}) {
+  async downloadDailyPdfReport({
+    date = null,
+    startDate = null,
+    endDate = null,
+    summaryOnly = false,
+    password = null,
+  } = {}) {
     const params = new URLSearchParams();
     if (date) params.set("date", date);
     if (startDate) params.set("start_date", startDate);
     if (endDate) params.set("end_date", endDate);
+    if (summaryOnly) params.set("summary_only", "true");
+    if (password) params.set("password", password);
 
     const qs = params.toString();
     const endpoint = `/api/v1/admin/reports/pdf/daily${qs ? `?${qs}` : ""}`;
@@ -155,9 +165,18 @@ export const adminReportService = {
    * @param {string|null} [options.date]
    * @param {string|null} [options.startDate]
    * @param {string|null} [options.endDate]
+   * @param {boolean} [options.summaryOnly]
+   * @param {string|null} [options.password]
    * @returns {Promise<string>} Downloaded filename
    */
-  async downloadPlayerPdfReport({ player, date = null, startDate = null, endDate = null }) {
+  async downloadPlayerPdfReport({
+    player,
+    date = null,
+    startDate = null,
+    endDate = null,
+    summaryOnly = false,
+    password = null,
+  }) {
     if (!player) {
       throw new Error("Please select a player to generate the report.");
     }
@@ -166,9 +185,57 @@ export const adminReportService = {
     if (date) params.set("date", date);
     if (startDate) params.set("start_date", startDate);
     if (endDate) params.set("end_date", endDate);
+    if (summaryOnly) params.set("summary_only", "true");
+    if (password) params.set("password", password);
 
     const qs = params.toString();
     const endpoint = `/api/v1/admin/reports/pdf/player?${qs}`;
     return downloadPdfBlob(endpoint, `Player_Report_${player}.pdf`);
   },
+
+  /**
+   * Fetch complete daily report dataset for frontend React PDF rendering.
+   * @param {Object} [options]
+   * @param {string|null} [options.date]
+   * @param {string|null} [options.startDate]
+   * @param {string|null} [options.endDate]
+   * @param {boolean} [options.summaryOnly]
+   * @returns {Promise<any>}
+   */
+  async getDailyReportData({ date = null, startDate = null, endDate = null, summaryOnly = false } = {}) {
+    const params = new URLSearchParams();
+    if (date) params.set("date", date);
+    if (startDate) params.set("start_date", startDate);
+    if (endDate) params.set("end_date", endDate);
+    if (summaryOnly) params.set("summary_only", "true");
+
+    const qs = params.toString();
+    return apiClient.get(`/api/v1/admin/reports/data/daily${qs ? `?${qs}` : ""}`);
+  },
+
+  /**
+   * Fetch complete player report dataset for frontend React PDF rendering.
+   * @param {Object} options
+   * @param {string|number} options.player
+   * @param {string|null} [options.date]
+   * @param {string|null} [options.startDate]
+   * @param {string|null} [options.endDate]
+   * @param {boolean} [options.summaryOnly]
+   * @returns {Promise<any>}
+   */
+  async getPlayerReportData({ player, date = null, startDate = null, endDate = null, summaryOnly = false }) {
+    if (!player) {
+      throw new Error("Please select a player.");
+    }
+    const params = new URLSearchParams();
+    params.set("player", String(player));
+    if (date) params.set("date", date);
+    if (startDate) params.set("start_date", startDate);
+    if (endDate) params.set("end_date", endDate);
+    if (summaryOnly) params.set("summary_only", "true");
+
+    const qs = params.toString();
+    return apiClient.get(`/api/v1/admin/reports/data/player?${qs}`);
+  },
 };
+

@@ -10,10 +10,13 @@ from app.models.word import DifficultyLevel
 # Set of settings fields considered critical which require the admin security key
 CRITICAL_SETTINGS_FIELDS: Set[str] = {
     "max_attempts",
+    "max_hints",
     "min_word_length",
     "max_word_length",
     "scoring_multiplier",
     "daily_word_limit",
+    "time_limit_seconds",
+    "default_difficulty",
     "game_enabled",
 }
 

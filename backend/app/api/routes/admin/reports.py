@@ -105,12 +105,14 @@ async def get_user_reports(
     "/pdf/daily",
     status_code=status.HTTP_200_OK,
     summary="Export Daily Activity Report PDF",
-    description="Admin-only endpoint generating a print-ready, professional PDF document for daily activity.",
+    description="Admin-only endpoint generating a print-ready, professional multi-page PDF document for daily activity.",
 )
 async def export_daily_report_pdf(
     report_date: Optional[date] = Query(None, alias="date", description="Filter for a specific date (YYYY-MM-DD)"),
     start_date: Optional[date] = Query(None, description="Start date filter (inclusive)"),
     end_date: Optional[date] = Query(None, description="End date filter (inclusive)"),
+    summary_only: bool = Query(False, description="Export executive summary only without session records"),
+    password: Optional[str] = Query(None, description="Optional AES document password protection"),
     current_admin: User = Depends(require_admin),
     reports_service: AdminReportsService = Depends(get_admin_reports_service),
 ) -> Response:
@@ -119,6 +121,8 @@ async def export_daily_report_pdf(
         target_date=report_date,
         start_date=start_date,
         end_date=end_date,
+        summary_only=summary_only,
+        password=password,
     )
     return Response(
         content=pdf_buffer.getvalue(),
@@ -134,13 +138,15 @@ async def export_daily_report_pdf(
     "/pdf/player",
     status_code=status.HTTP_200_OK,
     summary="Export Player Performance Report PDF",
-    description="Admin-only endpoint generating a print-ready, professional PDF document for individual player performance.",
+    description="Admin-only endpoint generating a print-ready, professional multi-page PDF document for individual player performance.",
 )
 async def export_player_report_pdf(
     player: str = Query(..., description="Player username, public UUID, or user ID"),
     report_date: Optional[date] = Query(None, alias="date", description="Filter for a specific date (YYYY-MM-DD)"),
     start_date: Optional[date] = Query(None, description="Start date filter (inclusive)"),
     end_date: Optional[date] = Query(None, description="End date filter (inclusive)"),
+    summary_only: bool = Query(False, description="Export executive summary only without session records"),
+    password: Optional[str] = Query(None, description="Optional AES document password protection"),
     current_admin: User = Depends(require_admin),
     reports_service: AdminReportsService = Depends(get_admin_reports_service),
 ) -> Response:
@@ -150,6 +156,8 @@ async def export_player_report_pdf(
         target_date=report_date,
         start_date=start_date,
         end_date=end_date,
+        summary_only=summary_only,
+        password=password,
     )
     return Response(
         content=pdf_buffer.getvalue(),
@@ -159,3 +167,54 @@ async def export_player_report_pdf(
             "Access-Control-Expose-Headers": "Content-Disposition",
         },
     )
+
+
+@router.get(
+    "/data/daily",
+    status_code=status.HTTP_200_OK,
+    summary="Get Complete Daily Report Dataset for Frontend Rendering",
+    description="Admin-only endpoint returning complete aggregated data for frontend React PDF report rendering and preview.",
+)
+async def get_daily_report_data(
+    report_date: Optional[date] = Query(None, alias="date", description="Filter for a specific date (YYYY-MM-DD)"),
+    start_date: Optional[date] = Query(None, description="Start date filter (inclusive)"),
+    end_date: Optional[date] = Query(None, description="End date filter (inclusive)"),
+    summary_only: bool = Query(False, description="Exclude detailed session logs"),
+    current_admin: User = Depends(require_admin),
+    reports_service: AdminReportsService = Depends(get_admin_reports_service),
+) -> ApiResponse[dict]:
+    """Retrieve full structured dataset for daily report frontend rendering."""
+    data = await reports_service.get_daily_report_dataset(
+        target_date=report_date,
+        start_date=start_date,
+        end_date=end_date,
+        summary_only=summary_only,
+    )
+    return ApiResponse.success_response(data=data, message="Daily report dataset retrieved successfully")
+
+
+@router.get(
+    "/data/player",
+    status_code=status.HTTP_200_OK,
+    summary="Get Complete Player Report Dataset for Frontend Rendering",
+    description="Admin-only endpoint returning complete aggregated player performance data for frontend React PDF rendering and preview.",
+)
+async def get_player_report_data(
+    player: str = Query(..., description="Player username, public UUID, or user ID"),
+    report_date: Optional[date] = Query(None, alias="date", description="Filter for a specific date (YYYY-MM-DD)"),
+    start_date: Optional[date] = Query(None, description="Start date filter (inclusive)"),
+    end_date: Optional[date] = Query(None, description="End date filter (inclusive)"),
+    summary_only: bool = Query(False, description="Exclude detailed session logs"),
+    current_admin: User = Depends(require_admin),
+    reports_service: AdminReportsService = Depends(get_admin_reports_service),
+) -> ApiResponse[dict]:
+    """Retrieve full structured dataset for player report frontend rendering."""
+    data = await reports_service.get_player_report_dataset(
+        player_identifier=player,
+        target_date=report_date,
+        start_date=start_date,
+        end_date=end_date,
+        summary_only=summary_only,
+    )
+    return ApiResponse.success_response(data=data, message="Player report dataset retrieved successfully")
+

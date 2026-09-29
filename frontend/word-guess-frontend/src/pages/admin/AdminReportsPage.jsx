@@ -10,6 +10,7 @@ import { ReportDateFilterToolbar } from "../../components/admin/reports/ReportDa
 import { DailyReportTable } from "../../components/admin/reports/DailyReportTable";
 import { PlayerAnalyticsView } from "../../components/admin/reports/PlayerAnalyticsView";
 import { ReportDownloadDialog } from "../../components/admin/reports/ReportDownloadDialog";
+import { ReportPreviewModal } from "../../components/admin/reports/ReportPreviewModal";
 import { formatReportDate } from "../../utils/dateUtils";
 import "./AdminReports.css";
 
@@ -69,6 +70,14 @@ export function AdminReportsPage() {
 
   // PDF Download Modal State
   const [isDownloadDialogOpen, setIsDownloadDialogOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewConfig, setPreviewConfig] = useState({ reportType: "daily", reportParams: {} });
+
+  const handleOpenPreview = ({ reportType, reportParams }) => {
+    setPreviewConfig({ reportType, reportParams });
+    setIsDownloadDialogOpen(false);
+    setIsPreviewModalOpen(true);
+  };
 
   // Load User dropdown list on mount
   useEffect(() => {
@@ -287,6 +296,25 @@ export function AdminReportsPage() {
         isRefreshing={isRefreshing}
         lastUpdated={lastUpdated}
         onOpenDownloadDialog={() => setIsDownloadDialogOpen(true)}
+        onOpenPreview={() => {
+          let startDate = appliedStartDate || customStartDate || null;
+          let endDate = appliedEndDate || customEndDate || null;
+          let targetDate = filterPreset === "TODAY" ? getTodayDateString() : null;
+          if (filterPreset === "TODAY") {
+            startDate = null;
+            endDate = null;
+          }
+          handleOpenPreview({
+            reportType: activeTab === "users" ? "player" : "daily",
+            reportParams: {
+              player: userFilterId !== "ALL" ? userFilterId : (userOptions[0]?.username || "admin"),
+              date: targetDate,
+              startDate,
+              endDate,
+              summaryOnly: false,
+            },
+          });
+        }}
       />
 
       {/* 2. Compact Date Filters Toolbar (Shared Across Tabs) */}
@@ -367,12 +395,21 @@ export function AdminReportsPage() {
       <ReportDownloadDialog
         isOpen={isDownloadDialogOpen}
         onClose={() => setIsDownloadDialogOpen(false)}
+        onPreview={handleOpenPreview}
         initialReportType={activeTab === "users" ? "player" : "daily"}
         initialPreset={filterPreset}
         initialStartDate={appliedStartDate || customStartDate}
         initialEndDate={appliedEndDate || customEndDate}
         initialPlayerId={userFilterId}
         userOptions={userOptions}
+      />
+
+      {/* 7. Interactive React-Rendered PDF Preview Modal */}
+      <ReportPreviewModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+        reportType={previewConfig.reportType}
+        reportParams={previewConfig.reportParams}
       />
     </div>
   );

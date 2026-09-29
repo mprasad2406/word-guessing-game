@@ -377,7 +377,8 @@ export function AdminMatchDetailPage() {
                   <span>Hints Revealed</span>
                 </span>
                 <span className="admin-metric-value num-tabular">
-                  {matchData.hints_used || 0} / {matchData.max_hints || 1}
+                  {matchData.hints_used || 0} / {matchData.max_hints !== undefined ? matchData.max_hints : 0}
+                  {matchData.max_hints === 0 && " (Disabled)"}
                 </span>
               </div>
 

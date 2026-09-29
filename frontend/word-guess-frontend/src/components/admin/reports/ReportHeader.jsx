@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart3, Calendar, Users, RotateCw, Clock, Download } from "lucide-react";
+import { BarChart3, Calendar, Users, RotateCw, Clock, Download, Eye } from "lucide-react";
 
 export function ReportHeader({
   activeTab,
@@ -8,6 +8,7 @@ export function ReportHeader({
   isRefreshing,
   lastUpdated,
   onOpenDownloadDialog,
+  onOpenPreview,
 }) {
   return (
     <div className="reports-header-section">
@@ -31,6 +32,25 @@ export function ReportHeader({
               <Clock size={12} />
               <span>Updated {lastUpdated}</span>
             </div>
+          )}
+
+          {/* Preview Report Button */}
+          {onOpenPreview && (
+            <button
+              type="button"
+              className="reports-download-pdf-btn"
+              onClick={onOpenPreview}
+              title="Preview analytical PDF report before exporting"
+              aria-label="Preview PDF Report"
+              style={{
+                backgroundColor: "#1e293b",
+                borderColor: "#334155",
+                color: "#e2e8f0",
+              }}
+            >
+              <Eye size={14} />
+              <span>Preview Report</span>
+            </button>
           )}
 
           {/* Download PDF Button */}
