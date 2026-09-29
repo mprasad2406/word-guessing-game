@@ -154,8 +154,9 @@ def get_admin_reports_repository(session: AsyncSession = Depends(get_db)) -> Adm
 
 def get_admin_reports_service(
     reports_repo: AdminReportsRepository = Depends(get_admin_reports_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
 ) -> AdminReportsService:
     """Dependency provider for AdminReportsService."""
-    return AdminReportsService(reports_repo=reports_repo)
+    return AdminReportsService(reports_repo=reports_repo, user_repo=user_repo)
 
 

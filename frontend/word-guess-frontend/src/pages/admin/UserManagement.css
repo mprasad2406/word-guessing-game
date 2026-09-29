@@ -1514,8 +1514,9 @@
 
 .user-detail-stat-metric-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 6px;
   height: 38px;
   margin: 4px 0;
 }
@@ -1532,7 +1533,7 @@
   font-size: 0.75rem;
   color: #64748b;
   font-weight: 500;
-  margin-left: 4px;
+  margin-left: 2px;
 }
 
 .user-detail-stat-baseline-row {

@@ -74,6 +74,27 @@ export function formatJoinedDate(dateStr) {
 }
 
 /**
+ * Formats report dates into clean human-readable format (e.g. "29 Sep 2026").
+ */
+export function formatReportDate(dateStr) {
+  if (!dateStr) return "—";
+  try {
+    if (typeof dateStr === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${d} ${months[m - 1]} ${y}`;
+    }
+    const d = parseServerDate(dateStr) || new Date(dateStr);
+    const day = d.getDate();
+    const month = d.toLocaleDateString("en-US", { month: "short" });
+    const year = d.getFullYear();
+    return `${day} ${month} ${year}`;
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
  * Formats seconds into MM:SS.
  */
 export function formatSeconds(totalSec) {

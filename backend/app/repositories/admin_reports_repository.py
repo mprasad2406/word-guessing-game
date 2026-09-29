@@ -30,9 +30,9 @@ class AdminReportsRepository:
         Uses separate session and guess aggregation subqueries to eliminate join row multiplication.
         """
         # Session metrics query
-        session_date_col = func.date(GameSession.started_at).label("report_date")
+        session_date_expr = func.date(GameSession.started_at)
         session_query = select(
-            session_date_col,
+            session_date_expr.label("report_date"),
             func.count(func.distinct(GameSession.player_id)).label("number_of_users"),
             func.count(func.distinct(GameSession.id)).label("total_games"),
             func.count(
@@ -40,32 +40,47 @@ class AdminReportsRepository:
                     case((GameSession.status == GameStatus.WON, GameSession.id), else_=None)
                 )
             ).label("games_won"),
-        ).group_by(session_date_col)
+            func.count(
+                func.distinct(
+                    case((GameSession.status == GameStatus.LOST, GameSession.id), else_=None)
+                )
+            ).label("games_lost"),
+            func.count(
+                func.distinct(
+                    case((GameSession.status == GameStatus.EXPIRED, GameSession.id), else_=None)
+                )
+            ).label("games_expired"),
+            func.count(
+                func.distinct(
+                    case((GameSession.status == GameStatus.ACTIVE, GameSession.id), else_=None)
+                )
+            ).label("games_active"),
+        ).group_by(session_date_expr)
 
         if target_date is not None:
-            session_query = session_query.where(session_date_col == target_date)
+            session_query = session_query.where(session_date_expr == target_date)
         if start_date is not None:
-            session_query = session_query.where(session_date_col >= start_date)
+            session_query = session_query.where(session_date_expr >= start_date)
         if end_date is not None:
-            session_query = session_query.where(session_date_col <= end_date)
+            session_query = session_query.where(session_date_expr <= end_date)
 
         session_result = await self.session.execute(session_query)
         session_rows = session_result.all()
 
         # Guess metrics query
-        guess_date_col = func.date(Guess.created_at).label("report_date")
+        guess_date_expr = func.date(Guess.created_at)
         guess_query = select(
-            guess_date_col,
+            guess_date_expr.label("report_date"),
             func.count(Guess.id).label("total_guesses"),
             func.count(case((Guess.is_correct.is_(True), Guess.id), else_=None)).label("correct_guesses"),
-        ).group_by(guess_date_col)
+        ).group_by(guess_date_expr)
 
         if target_date is not None:
-            guess_query = guess_query.where(guess_date_col == target_date)
+            guess_query = guess_query.where(guess_date_expr == target_date)
         if start_date is not None:
-            guess_query = guess_query.where(guess_date_col >= start_date)
+            guess_query = guess_query.where(guess_date_expr >= start_date)
         if end_date is not None:
-            guess_query = guess_query.where(guess_date_col <= end_date)
+            guess_query = guess_query.where(guess_date_expr <= end_date)
 
         guess_result = await self.session.execute(guess_query)
         guess_rows = guess_result.all()
@@ -74,7 +89,6 @@ class AdminReportsRepository:
         guess_map: Dict[Any, Dict[str, int]] = {}
         for g in guess_rows:
             d = g.report_date
-            # Normalise string date if sqlite/engine returned string
             if isinstance(d, str):
                 d = date.fromisoformat(d)
             guess_map[d] = {
@@ -93,6 +107,9 @@ class AdminReportsRepository:
                 "number_of_users": s.number_of_users or 0,
                 "total_games": s.total_games or 0,
                 "games_won": s.games_won or 0,
+                "games_lost": s.games_lost or 0,
+                "games_expired": s.games_expired or 0,
+                "games_active": s.games_active or 0,
             }
 
         for d in guess_map.keys():
@@ -108,7 +125,17 @@ class AdminReportsRepository:
 
         summaries = []
         for d in paged_dates:
-            s_data = session_map.get(d, {"number_of_users": 0, "total_games": 0, "games_won": 0})
+            s_data = session_map.get(
+                d,
+                {
+                    "number_of_users": 0,
+                    "total_games": 0,
+                    "games_won": 0,
+                    "games_lost": 0,
+                    "games_expired": 0,
+                    "games_active": 0,
+                },
+            )
             g_data = guess_map.get(d, {"total_guesses": 0, "correct_guesses": 0})
             total_games = s_data["total_games"]
             games_won = s_data["games_won"]
@@ -119,7 +146,10 @@ class AdminReportsRepository:
                 "number_of_users": s_data["number_of_users"],
                 "total_games": total_games,
                 "games_won": games_won,
-                "number_of_correct_guesses": g_data["correct_guesses"],
+                "games_lost": s_data["games_lost"],
+                "games_expired": s_data["games_expired"],
+                "games_active": s_data["games_active"],
+                "number_of_correct_guesses": games_won,
                 "total_guesses": g_data["total_guesses"],
                 "win_rate": win_rate,
             })
@@ -129,27 +159,41 @@ class AdminReportsRepository:
     async def get_daily_details(
         self,
         target_date: date,
+        status: Optional[GameStatus] = None,
+        search: Optional[str] = None,
         page: int = 1,
-        page_size: int = 20,
+        page_size: int = 10,
     ) -> Tuple[List[GameSession], int]:
-        """Fetch game session details for a single target date with eager loaded relations."""
-        session_date_col = func.date(GameSession.started_at)
+        """Fetch game session details for a single target date with eager loaded relations and optional filters."""
+        session_date_expr = func.date(GameSession.started_at)
         
+        base_query = (
+            select(GameSession)
+            .join(User, GameSession.player_id == User.id)
+            .where(session_date_expr == target_date)
+        )
+
+        if status is not None:
+            base_query = base_query.where(GameSession.status == status)
+        if search and search.strip():
+            term = f"%{search.strip().lower()}%"
+            base_query = base_query.where(func.lower(User.username).like(term))
+
         # Count total
-        count_query = select(func.count(GameSession.id)).where(session_date_col == target_date)
+        subq = base_query.subquery()
+        count_query = select(func.count()).select_from(subq)
         total_res = await self.session.execute(count_query)
         total = total_res.scalar_one() or 0
 
         # Query sessions
         offset = (page - 1) * page_size
         query = (
-            select(GameSession)
+            base_query
             .options(
                 selectinload(GameSession.player),
                 selectinload(GameSession.word),
                 selectinload(GameSession.guesses),
             )
-            .where(session_date_col == target_date)
             .order_by(GameSession.started_at.desc())
             .offset(offset)
             .limit(page_size)
@@ -170,12 +214,13 @@ class AdminReportsRepository:
         """
         Aggregate user performance metrics grouped by (player_id, date).
         """
-        session_date_col = func.date(GameSession.started_at).label("report_date")
+        session_date_expr = func.date(GameSession.started_at)
         session_query = (
             select(
                 GameSession.player_id,
+                User.public_id.label("player_public_id"),
                 User.username,
-                session_date_col,
+                session_date_expr.label("report_date"),
                 func.count(func.distinct(GameSession.id)).label("total_games"),
                 func.count(
                     func.distinct(
@@ -184,41 +229,42 @@ class AdminReportsRepository:
                 ).label("games_won"),
             )
             .join(User, GameSession.player_id == User.id)
-            .group_by(GameSession.player_id, User.username, session_date_col)
+            .group_by(GameSession.player_id, User.public_id, User.username, session_date_expr)
         )
 
         if user_id is not None:
             session_query = session_query.where(GameSession.player_id == user_id)
         if target_date is not None:
-            session_query = session_query.where(session_date_col == target_date)
+            session_query = session_query.where(session_date_expr == target_date)
         if start_date is not None:
-            session_query = session_query.where(session_date_col >= start_date)
+            session_query = session_query.where(session_date_expr >= start_date)
         if end_date is not None:
-            session_query = session_query.where(session_date_col <= end_date)
+            session_query = session_query.where(session_date_expr <= end_date)
 
         session_result = await self.session.execute(session_query)
         session_rows = session_result.all()
 
         # Guess metrics query joined to GameSession
+        guess_date_expr = func.date(Guess.created_at)
         guess_query = (
             select(
                 GameSession.player_id,
-                session_date_col,
+                guess_date_expr.label("report_date"),
                 func.count(Guess.id).label("total_guesses"),
                 func.count(case((Guess.is_correct.is_(True), Guess.id), else_=None)).label("correct_guesses"),
             )
             .join(GameSession, Guess.game_session_id == GameSession.id)
-            .group_by(GameSession.player_id, session_date_col)
+            .group_by(GameSession.player_id, guess_date_expr)
         )
 
         if user_id is not None:
             guess_query = guess_query.where(GameSession.player_id == user_id)
         if target_date is not None:
-            guess_query = guess_query.where(session_date_col == target_date)
+            guess_query = guess_query.where(guess_date_expr == target_date)
         if start_date is not None:
-            guess_query = guess_query.where(session_date_col >= start_date)
+            guess_query = guess_query.where(guess_date_expr >= start_date)
         if end_date is not None:
-            guess_query = guess_query.where(session_date_col <= end_date)
+            guess_query = guess_query.where(guess_date_expr <= end_date)
 
         guess_result = await self.session.execute(guess_query)
         guess_rows = guess_result.all()
@@ -246,6 +292,7 @@ class AdminReportsRepository:
 
             entries.append({
                 "user_id": s.player_id,
+                "player_public_id": str(s.player_public_id) if s.player_public_id else None,
                 "username": s.username,
                 "date": d,
                 "words_tried": total_games,

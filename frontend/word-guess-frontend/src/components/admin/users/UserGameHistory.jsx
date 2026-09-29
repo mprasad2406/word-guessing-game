@@ -61,13 +61,13 @@ function AttemptDots({ attemptsUsed = 0, maxAttempts = 5, status = "ACTIVE" }) {
     );
   }
 
-  const tooltip = `${used} of ${total} attempts ${isWon ? "(Solved)" : "used"}`;
+  const tooltip = `${used} of 5 attempts ${isWon ? "(Solved)" : "used"}`;
 
   return (
     <div className="attempt-dots-wrap" title={tooltip} aria-label={tooltip}>
       <div className="attempt-dots-container">{dots}</div>
       <span className="attempt-dots-count num-tabular">
-        {used}/{total}
+        {used}/5
       </span>
     </div>
   );

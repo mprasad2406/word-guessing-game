@@ -15,6 +15,9 @@ class DailyReportSummary(BaseModel):
     number_of_correct_guesses: int
     total_games: int
     games_won: int
+    games_lost: int = 0
+    games_expired: int = 0
+    games_active: int = 0
     total_guesses: int
     win_rate: float
 
@@ -25,7 +28,9 @@ class DailySessionDetail(BaseModel):
     """Detailed game session entry for a specific date."""
 
     session_id: int
+    session_public_id: Optional[str] = None
     player_id: int
+    player_public_id: Optional[str] = None
     username: str
     target_word: str
     status: GameStatus
@@ -63,6 +68,7 @@ class UserReportSummary(BaseModel):
     """Aggregated user performance summary by date."""
 
     user_id: int
+    player_public_id: Optional[str] = None
     username: str
     date: date
     words_tried: int

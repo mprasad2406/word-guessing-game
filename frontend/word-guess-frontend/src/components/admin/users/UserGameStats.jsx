@@ -55,7 +55,7 @@ export function UserGameStats({ user }) {
   const expiredGames = user.games_expired || 0;
   const activeGames = user.active_games || 0;
   const completedGames = wonGames + lostGames + expiredGames;
-  const winRate = typeof user.win_rate === "number" ? user.win_rate : 0;
+  const winRate = typeof user.win_rate === "number" ? Math.round(user.win_rate * 10) / 10 : 0;
   const avgAttempts = user.average_attempts
     ? Number(user.average_attempts).toFixed(1)
     : totalGames > 0
@@ -105,8 +105,7 @@ export function UserGameStats({ user }) {
         </div>
 
         <div className="user-detail-stat-metric-row">
-          <span className="user-detail-stat-value text-success-bold num-tabular">{wonGames}</span>
-          <CircularWinRateRing percentage={winRate} />
+          <span className="user-detail-stat-value text-success num-tabular">{wonGames}</span>
         </div>
 
         <div className="user-detail-stat-baseline-row">
@@ -127,7 +126,7 @@ export function UserGameStats({ user }) {
         </div>
 
         <div className="user-detail-stat-metric-row">
-          <span className="user-detail-stat-value text-danger-bold num-tabular">
+          <span className="user-detail-stat-value text-danger num-tabular">
             {lostGames + expiredGames}
           </span>
         </div>
@@ -155,8 +154,10 @@ export function UserGameStats({ user }) {
         </div>
 
         <div className="user-detail-stat-metric-row">
-          <span className="user-detail-stat-value num-tabular">{avgAttempts}</span>
-          <span className="user-detail-stat-unit">avg attempts</span>
+          <span className="user-detail-stat-value num-tabular">
+            {avgAttempts}
+            <span className="user-detail-stat-unit">avg attempts</span>
+          </span>
         </div>
 
         <div className="user-detail-stat-baseline-row">
