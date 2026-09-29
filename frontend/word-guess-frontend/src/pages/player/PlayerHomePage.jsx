@@ -1,14 +1,39 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import {
+  Play,
+  History,
+  Sparkles,
+  CalendarCheck,
+  Infinity as InfinityIcon,
+  UserCheck,
+  Check,
+  RefreshCw,
+  X,
+  Lock,
+  AlertCircle,
+  AlertTriangle,
+  ArrowRight,
+  ShieldCheck,
+  BookOpen,
+  User,
+  Activity,
+  CheckCircle2,
+  Info,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { gameplayService } from "../../services/gameplayService";
+import { playerPaths } from "../../routes/paths";
+import "./PlayerLobby.css";
 
 export function PlayerHomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
   const [isStartingGame, setIsStartingGame] = useState(false);
   const [startError, setStartError] = useState(null);
+  const [showStartModal, setShowStartModal] = useState(false);
   const [dailyQuota, setDailyQuota] = useState({
     daily_limit: 3,
     games_played_today: 0,
@@ -16,6 +41,17 @@ export function PlayerHomePage() {
     can_start_game: true,
   });
   const [isLoadingQuota, setIsLoadingQuota] = useState(true);
+
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && showStartModal && !isStartingGame) {
+        setShowStartModal(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showStartModal, isStartingGame]);
 
   useEffect(() => {
     let isMounted = true;
@@ -50,13 +86,16 @@ export function PlayerHomePage() {
 
     try {
       const newGame = await gameplayService.startGame();
+      setShowStartModal(false);
       toast.success("Game created! Let's guess the word!");
-      navigate(`/player/game/${newGame.id}`);
+      navigate(playerPaths.matchDetails(newGame.public_id));
     } catch (err) {
       console.error("Failed to create game:", err);
-      const errMsg = err?.message || "Failed to start a new game session. Please try again later.";
+      const errMsg =
+        err?.message || "Failed to start a new game session. Please try again later.";
       setStartError(errMsg);
       toast.error(errMsg);
+      setShowStartModal(false);
       // Re-fetch quota in case it changed
       try {
         const quota = await gameplayService.getDailyQuota();
@@ -70,245 +109,431 @@ export function PlayerHomePage() {
   };
 
   const isUnlimited = dailyQuota.daily_limit === 0 || Boolean(dailyQuota.is_unlimited);
-  const isLimitReached = !isUnlimited && (!dailyQuota.can_start_game || dailyQuota.games_played_today >= dailyQuota.daily_limit);
+  const isLimitReached =
+    !isUnlimited &&
+    (!dailyQuota.can_start_game || dailyQuota.games_played_today >= dailyQuota.daily_limit);
 
   return (
-    <div className="container py-4" style={{ maxWidth: "900px" }}>
-      {/* Welcome Banner */}
-      <div className="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-primary text-white">
-        <div className="card-body p-4 p-md-5">
-          <div className="row align-items-center">
-            <div className="col-lg-8">
-              <span className="badge bg-white text-primary mb-2 px-3 py-1 fw-semibold text-uppercase">
-                Player Lobby
-              </span>
-              <h1 className="fw-bold display-6 mb-2">
-                Welcome back, {user?.username}!
-              </h1>
-              <p className="lead mb-4 text-white-50">
-                Ready to test your vocabulary and deduction skills? Start a fresh game session and crack the secret word!
-              </p>
-              <div className="d-flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  className={`btn btn-lg px-4 fw-bold d-inline-flex align-items-center gap-2 shadow ${
-                    isLimitReached ? "btn-light text-muted opacity-75" : "btn-light text-primary"
-                  }`}
-                  onClick={handleStartGame}
-                  disabled={isStartingGame || isLimitReached}
-                  title={isLimitReached ? `Daily limit of ${dailyQuota.daily_limit} words reached` : "Start a new game"}
-                >
-                  {isStartingGame ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      <span>Starting Game...</span>
-                    </>
-                  ) : isLimitReached ? (
-                    <>
-                      <i className="bi bi-lock-fill fs-5"></i>
-                      <span>Daily Limit Reached ({dailyQuota.games_played_today}/{dailyQuota.daily_limit})</span>
-                    </>
-                  ) : (
-                    <>
-                      <i className="bi bi-play-circle-fill fs-5"></i>
-                      <span>Start New Game</span>
-                    </>
-                  )}
-                </button>
-                <Link
-                  to="/player/history"
-                  className="btn btn-outline-light btn-lg px-4 fw-semibold d-inline-flex align-items-center gap-2"
-                >
-                  <i className="bi bi-journal-text fs-5"></i>
-                  <span>Game History</span>
-                </Link>
-              </div>
+    <div className="lobby-container">
+      {/* 1. Welcome Hero Card */}
+      <section className="lobby-hero-card" aria-label="Welcome Banner">
+        <div className="lobby-hero-left">
+          <div className="lobby-eyebrow-badge">
+            <Sparkles size={14} />
+            <span>Player Lobby</span>
+          </div>
+          <h1 className="lobby-hero-title">
+            Welcome back, {user?.username || "Player"}!
+          </h1>
+          <p className="lobby-hero-desc">
+            Ready for your next word challenge? Start a new game and put your vocabulary to the test.
+          </p>
+
+          <div className="lobby-hero-actions">
+            <button
+              type="button"
+              className="btn-start-game"
+              onClick={() => setShowStartModal(true)}
+              disabled={isStartingGame || isLimitReached}
+              title={
+                isLimitReached
+                  ? `Daily limit of ${dailyQuota.daily_limit} words reached`
+                  : "Start a new game"
+              }
+              aria-label="Start New Game"
+            >
+              {isStartingGame ? (
+                <>
+                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span>Starting Game...</span>
+                </>
+              ) : isLimitReached ? (
+                <>
+                  <Lock size={18} />
+                  <span>Daily Limit Reached ({dailyQuota.games_played_today}/{dailyQuota.daily_limit})</span>
+                </>
+              ) : (
+                <>
+                  <Play size={18} fill="#2563EB" />
+                  <span>Start New Game</span>
+                </>
+              )}
+            </button>
+
+            <Link
+              to="/player/history"
+              className="btn-hero-history"
+              aria-label="View Game History"
+            >
+              <History size={18} />
+              <span>Game History</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Hero Decorative Illustration (Neutral frosted letter tiles without misleading feedback) */}
+        <div className="lobby-hero-right" aria-hidden="true">
+          <div className="word-puzzle-graphic-container">
+            <div className="puzzle-graphic-header">
+              <Sparkles size={14} />
+              <span>5-Letter Word Challenge</span>
             </div>
-            <div className="col-lg-4 d-none d-lg-block text-center">
-              <i className="bi bi-controller text-white opacity-50" style={{ fontSize: "7rem" }}></i>
+            <div className="puzzle-tile-row">
+              <div className="puzzle-tile">W</div>
+              <div className="puzzle-tile tile-highlight">O</div>
+              <div className="puzzle-tile">R</div>
+              <div className="puzzle-tile">D</div>
+              <div className="puzzle-tile tile-highlight">S</div>
+            </div>
+            <div className="puzzle-tile-row">
+              <div className="puzzle-tile">G</div>
+              <div className="puzzle-tile">U</div>
+              <div className="puzzle-tile tile-highlight">E</div>
+              <div className="puzzle-tile">S</div>
+              <div className="puzzle-tile">S</div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Daily Limit Warning Banner if Reached */}
-      {isLimitReached && (
-        <div className="alert alert-warning border-0 shadow-sm d-flex align-items-center gap-3 rounded-4 p-3 mb-4" role="alert">
-          <i className="bi bi-calendar-x-fill fs-3 text-warning"></i>
+      {!isLoadingQuota && isLimitReached && (
+        <div className="lobby-alert-warning" role="alert">
+          <AlertCircle size={22} className="flex-shrink-0" />
           <div>
-            <h6 className="fw-bold mb-0">Daily Word Limit Reached ({dailyQuota.games_played_today} / {dailyQuota.daily_limit} words played)</h6>
-            <p className="small mb-0 text-secondary">
-              You have completed all {dailyQuota.daily_limit} words allowed for today. New words and attempts will become available tomorrow!
-            </p>
+            <strong>Daily Word Limit Reached ({dailyQuota.games_played_today} / {dailyQuota.daily_limit} words played).</strong>{" "}
+            You have completed all allowed words for today. New words and attempts will become available tomorrow!
           </div>
         </div>
       )}
 
       {/* Start Game Error Alert */}
       {startError && (
-        <div className="alert alert-danger d-flex align-items-center gap-2 rounded-3 mb-4" role="alert">
-          <i className="bi bi-exclamation-triangle-fill fs-5"></i>
-          <div>
-            <strong>Unable to start game:</strong> {startError}
+        <div className="lobby-alert-danger" role="alert">
+          <AlertTriangle size={22} className="flex-shrink-0" />
+          <div className="d-flex justify-content-between align-items-center w-100">
+            <div>
+              <strong>Unable to start game:</strong> {startError}
+            </div>
+            <button
+              type="button"
+              className="btn-close ms-2"
+              onClick={() => setStartError(null)}
+              aria-label="Dismiss error"
+            ></button>
           </div>
         </div>
       )}
 
-      {/* Daily Quota Tracking Card */}
-      <div className="card shadow-sm border-0 rounded-4 mb-4">
-        <div className="card-body p-4">
-          <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div>
-              <h5 className="fw-bold mb-1 d-flex align-items-center gap-2">
-                <i className="bi bi-calendar-check text-primary"></i>
-                <span>Daily Guessing Quota</span>
-              </h5>
-              <p className="text-muted small mb-0">
-                {isUnlimited ? (
-                  <>You have <strong>unlimited</strong> word guesses allowed today.</>
-                ) : (
-                  <>
-                    You can guess up to <strong>{dailyQuota.daily_limit} words</strong> per day (
-                    {dailyQuota.games_remaining_today ?? Math.max(0, dailyQuota.daily_limit - dailyQuota.games_played_today)} remaining).
-                  </>
-                )}
-              </p>
+      {/* 2. Daily Guessing Quota Card (With Skeleton Loader) */}
+      <section className="quota-status-card" aria-label="Daily Guessing Quota Status">
+        {isLoadingQuota ? (
+          <>
+            <div className="quota-left-content">
+              <div className="skeleton-shimmer" style={{ width: "44px", height: "44px", borderRadius: "10px" }}></div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div className="skeleton-shimmer" style={{ width: "160px", height: "18px" }}></div>
+                <div className="skeleton-shimmer" style={{ width: "260px", height: "14px" }}></div>
+              </div>
             </div>
             <div>
+              <div className="skeleton-shimmer" style={{ width: "130px", height: "34px", borderRadius: "9999px" }}></div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="quota-left-content">
+              <div className="quota-icon-badge">
+                <CalendarCheck size={22} />
+              </div>
+              <div>
+                <h2 className="quota-text-title">Daily Guessing Quota</h2>
+                <p className="quota-text-desc">
+                  {isUnlimited ? (
+                    <>You have <strong>unlimited</strong> word guesses allowed today.</>
+                  ) : (
+                    <>
+                      You can guess up to <strong>{dailyQuota.daily_limit} words</strong> per day (
+                      {dailyQuota.games_remaining_today ??
+                        Math.max(0, dailyQuota.daily_limit - dailyQuota.games_played_today)}{" "}
+                      remaining).
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div>
               {isUnlimited ? (
-                <div className="d-flex align-items-center gap-2 bg-success-subtle text-success border border-success-subtle rounded-3 px-3 py-2 fw-bold">
-                  <i className="bi bi-infinity fs-5"></i>
+                <div className="unlimited-badge">
+                  <InfinityIcon size={16} strokeWidth={2.5} />
                   <span>Unlimited Play</span>
                 </div>
               ) : dailyQuota.daily_limit <= 6 ? (
-                <div className="d-flex flex-wrap align-items-center gap-2">
+                <div className="quota-limited-slots">
                   {Array.from({ length: dailyQuota.daily_limit }, (_, idx) => idx + 1).map((slot) => {
                     const isPlayed = slot <= dailyQuota.games_played_today;
                     return (
                       <div
                         key={slot}
-                        className={`d-flex align-items-center justify-content-center rounded-3 p-2 px-3 fw-bold border ${
-                          isPlayed
-                            ? "bg-success-subtle text-success border-success-subtle"
-                            : "bg-light text-secondary border-light-subtle"
-                        }`}
-                        style={{ minWidth: "85px" }}
+                        className={`quota-slot-pill ${isPlayed ? "completed" : "remaining"}`}
                       >
-                        <i className={`bi ${isPlayed ? "bi-check-circle-fill me-1 text-success" : "bi-dash-circle me-1 text-muted"}`}></i>
-                        <span className="small">Word {slot}</span>
+                        {isPlayed ? (
+                          <Check size={14} strokeWidth={2.5} />
+                        ) : (
+                          <span style={{ fontSize: "10px", lineHeight: 1 }}>○</span>
+                        )}
+                        <span>Word {slot}</span>
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <div className="d-flex align-items-center gap-2 bg-light border border-light-subtle rounded-3 px-3 py-2 fw-bold text-dark">
-                  <i className="bi bi-card-checklist text-primary me-1"></i>
+                <div className="unlimited-badge" style={{ backgroundColor: "#F1F5F9", color: "#0F172A", borderColor: "#E2E8F0" }}>
                   <span>{dailyQuota.games_played_today} / {dailyQuota.daily_limit} Played</span>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      </div>
+          </>
+        )}
+      </section>
 
-      {/* Game Rules & Profile Overview */}
-      <div className="row g-4">
+      {/* 3. Lower Two-Column Grid (How to Play & Player Profile) */}
+      <div className="lobby-grid-layout">
         {/* How to Play Card */}
-        <div className="col-md-7">
-          <div className="card shadow-sm border-0 rounded-4 h-100">
-            <div className="card-header bg-white py-3 border-0">
-              <h5 className="mb-0 fw-semibold d-flex align-items-center gap-2">
-                <i className="bi bi-info-circle text-primary"></i>
-                <span>How to Play</span>
-              </h5>
+        <section className="lobby-card" aria-labelledby="how-to-play-heading">
+          <div className="lobby-card-header">
+            <div className="lobby-card-icon-box">
+              <BookOpen size={20} />
             </div>
-            <div className="card-body pt-0 px-4 pb-4">
-              <div className="d-flex flex-column gap-3">
-                <div className="d-flex gap-3 align-items-start">
-                  <div className="bg-primary-subtle text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: "36px", height: "36px" }}>
-                    <strong>1</strong>
-                  </div>
-                  <div>
-                    <h6 className="fw-bold mb-1">
-                      {isUnlimited ? "Unlimited Daily Games" : `${dailyQuota.daily_limit} Words Per Day`}
-                    </h6>
-                    <p className="small text-muted mb-0">
-                      {isUnlimited
-                        ? "Unlimited games enabled! Play as many secret word guessing sessions as you'd like."
-                        : `Every player is allocated up to ${dailyQuota.daily_limit} secret words to solve each day.`}
-                    </p>
+            <h2 id="how-to-play-heading" className="lobby-card-title">
+              How to Play
+            </h2>
+          </div>
+
+          <div className="lobby-card-body">
+            <div className="instruction-step-list">
+              {/* Step 1 */}
+              <div className="instruction-step-item">
+                <div className="step-number-circle">1</div>
+                <div className="step-content">
+                  <h3 className="step-heading">
+                    {isUnlimited ? "Unlimited Daily Games" : `${dailyQuota.daily_limit} Words Daily`}
+                  </h3>
+                  <p className="step-description">
+                    {isUnlimited
+                      ? "Start multiple game sessions whenever you want. Each game challenges you with a new 5-letter hidden word."
+                      : `You are allocated up to ${dailyQuota.daily_limit} secret words to solve each day with fresh challenges daily.`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="instruction-step-item">
+                <div className="step-number-circle">2</div>
+                <div className="step-content">
+                  <h3 className="step-heading">Understand the Tile Colors</h3>
+                  <p className="step-description">
+                    After each 5-letter guess, tile colors highlight your accuracy:
+                  </p>
+
+                  <div className="tile-demo-grid">
+                    <div className="tile-demo-card">
+                      <div className="d-flex align-items-center justify-content-between">
+                        <div className="demo-tile-box color-green">C</div>
+                        <span className="demo-tile-label label-green">
+                          <Check size={12} strokeWidth={3} />
+                          <span>Green</span>
+                        </span>
+                      </div>
+                      <p className="demo-tile-desc">
+                        Correct letter in the correct position.
+                      </p>
+                    </div>
+
+                    <div className="tile-demo-card">
+                      <div className="d-flex align-items-center justify-content-between">
+                        <div className="demo-tile-box color-orange">A</div>
+                        <span className="demo-tile-label label-orange">
+                          <RefreshCw size={12} strokeWidth={3} />
+                          <span>Orange</span>
+                        </span>
+                      </div>
+                      <p className="demo-tile-desc">
+                        Letter exists in the word, wrong position.
+                      </p>
+                    </div>
+
+                    <div className="tile-demo-card">
+                      <div className="d-flex align-items-center justify-content-between">
+                        <div className="demo-tile-box color-gray">R</div>
+                        <span className="demo-tile-label label-gray">
+                          <X size={12} strokeWidth={3} />
+                          <span>Gray</span>
+                        </span>
+                      </div>
+                      <p className="demo-tile-desc">
+                        Letter is not in the secret word.
+                      </p>
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="d-flex gap-3 align-items-start">
-                  <div className="bg-primary-subtle text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: "36px", height: "36px" }}>
-                    <strong>2</strong>
-                  </div>
-                  <div>
-                    <h6 className="fw-bold mb-1">Wordle Color Highlights</h6>
-                    <p className="small text-muted mb-0">
-                      Submit 5-letter uppercase guesses. Green indicates the right spot, Orange means wrong spot, and Grey means not in word.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="d-flex gap-3 align-items-start">
-                  <div className="bg-primary-subtle text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: "36px", height: "36px" }}>
-                    <strong>3</strong>
-                  </div>
-                  <div>
-                    <h6 className="fw-bold mb-1">Limited Guesses & Hints</h6>
-                    <p className="small text-muted mb-0">
-                      You have 5 attempts to solve the secret word. Use hints when available to reveal clues!
-                    </p>
-                  </div>
+              {/* Step 3 */}
+              <div className="instruction-step-item">
+                <div className="step-number-circle">3</div>
+                <div className="step-content">
+                  <h3 className="step-heading">Five Guesses & Hints</h3>
+                  <p className="step-description">
+                    You have 5 attempts to solve the word. Request clues with hints when available to solve tricky puzzles.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Player Profile Summary */}
-        <div className="col-md-5">
-          <div className="card shadow-sm border-0 rounded-4 h-100">
-            <div className="card-header bg-white py-3 border-0">
-              <h5 className="mb-0 fw-semibold d-flex align-items-center gap-2">
-                <i className="bi bi-person-badge text-primary"></i>
-                <span>Player Profile</span>
-              </h5>
+        {/* Player Profile Summary Card */}
+        <section className="lobby-card" aria-labelledby="player-profile-heading">
+          <div className="lobby-card-header">
+            <div className="lobby-card-icon-box">
+              <UserCheck size={20} />
             </div>
-            <div className="card-body pt-0 px-4 pb-4">
-              <div className="list-group list-group-flush small">
-                <div className="list-group-item px-0 py-2 d-flex justify-content-between">
-                  <span className="text-muted">Player Username</span>
-                  <span className="fw-semibold text-dark">{user?.username}</span>
+            <h2 id="player-profile-heading" className="lobby-card-title">
+              Player Profile
+            </h2>
+          </div>
+
+          <div className="lobby-card-body">
+            <div className="profile-content-wrapper">
+              <div className="profile-rows-container">
+                <div className="profile-info-row">
+                  <div className="profile-row-label-group">
+                    <User size={16} className="profile-row-icon" />
+                    <span className="profile-row-label">Username</span>
+                  </div>
+                  <span className="profile-row-value">{user?.username || "Player"}</span>
                 </div>
-                <div className="list-group-item px-0 py-2 d-flex justify-content-between">
-                  <span className="text-muted">Account Role</span>
-                  <span className="badge bg-primary">{user?.role}</span>
-                </div>
-                <div className="list-group-item px-0 py-2 d-flex justify-content-between">
-                  <span className="text-muted">Daily Words Played</span>
-                  <span className="fw-bold text-dark">
-                    {dailyQuota.games_played_today} {isUnlimited ? "(Unlimited)" : `/ ${dailyQuota.daily_limit}`}
+
+                <div className="profile-info-row">
+                  <div className="profile-row-label-group">
+                    <ShieldCheck size={16} className="profile-row-icon" />
+                    <span className="profile-row-label">Account Role</span>
+                  </div>
+                  <span className="navbar-role-pill role-player">
+                    {user?.role || "PLAYER"}
                   </span>
                 </div>
-                <div className="list-group-item px-0 py-2 d-flex justify-content-between">
-                  <span className="text-muted">Status</span>
-                  <span className="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+
+                <div className="profile-info-row">
+                  <div className="profile-row-label-group">
+                    <Activity size={16} className="profile-row-icon" />
+                    <span className="profile-row-label">Words Played</span>
+                  </div>
+                  {isLoadingQuota ? (
+                    <span className="skeleton-shimmer" style={{ width: "65px", height: "16px" }}></span>
+                  ) : (
+                    <span className="profile-row-value">
+                      {dailyQuota.games_played_today}{" "}
+                      {isUnlimited ? "(Unlimited)" : `/ ${dailyQuota.daily_limit}`}
+                    </span>
+                  )}
+                </div>
+
+                <div className="profile-info-row">
+                  <div className="profile-row-label-group">
+                    <CheckCircle2 size={16} className="profile-row-icon" />
+                    <span className="profile-row-label">Status</span>
+                  </div>
+                  <span className="active-status-badge">
+                    <span className="active-status-dot"></span>
+                    <span>Active</span>
+                  </span>
                 </div>
               </div>
 
-              <div className="mt-4 pt-2">
-                <Link to="/player/history" className="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center gap-2">
-                  <i className="bi bi-journal-text"></i>
-                  <span>View Full Match History</span>
-                </Link>
+              <div className="profile-tip-box">
+                <Info size={16} className="profile-tip-icon" />
+                <span>
+                  Your session stats and daily quota update in real time as you play and complete word games.
+                </span>
+              </div>
+            </div>
+
+            <div className="profile-history-action">
+              <Link
+                to="/player/history"
+                className="btn-view-match-history"
+                aria-label="View Full Match History"
+              >
+                <History size={16} />
+                <span>View Full Match History</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Start New Game Confirmation Modal */}
+      {showStartModal && (
+        <div
+          className="modal-backdrop-custom"
+          role="presentation"
+          onClick={() => !isStartingGame && setShowStartModal(false)}
+        >
+          <div
+            className="modal-dialog-custom"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="start-modal-title"
+            aria-describedby="start-modal-description"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content-custom">
+              <div className="modal-icon-badge primary">
+                <Sparkles size={26} strokeWidth={2.2} />
+              </div>
+              <h2 id="start-modal-title" className="modal-title-custom">
+                Start a new game?
+              </h2>
+              <p id="start-modal-description" className="modal-desc-custom">
+                You'll have 5 attempts to guess the secret 5-letter word. Ready to begin?
+              </p>
+              <div className="modal-actions-custom">
+                <button
+                  type="button"
+                  className="modal-btn-cancel"
+                  onClick={() => setShowStartModal(false)}
+                  disabled={isStartingGame}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="modal-btn-confirm-primary"
+                  onClick={handleStartGame}
+                  disabled={isStartingGame}
+                  autoFocus
+                >
+                  {isStartingGame ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <span>Starting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play size={16} fill="#FFFFFF" />
+                      <span>Start Game</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

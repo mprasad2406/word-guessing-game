@@ -43,6 +43,7 @@ export function AppRouter() {
       <Route element={<RoleBasedRoute allowedRoles={["PLAYER"]} />}>
         <Route element={<PlayerLayout />}>
           <Route path="/player" element={<PlayerHomePage />} />
+          <Route path="/player/matches/:publicId" element={<ActiveGamePage />} />
           <Route path="/player/game/:gameId" element={<ActiveGamePage />} />
           <Route path="/player/history" element={<GameHistoryPage />} />
         </Route>

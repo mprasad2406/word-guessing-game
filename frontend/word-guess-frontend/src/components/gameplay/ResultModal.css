@@ -1,0 +1,251 @@
+/* ==========================================================================
+   Result Modal Styles (Live Gameplay Completion)
+   ========================================================================== */
+
+.result-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 2100;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+.result-modal-dialog {
+  background-color: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e2e8f0;
+  width: 100%;
+  max-width: 460px;
+  overflow: hidden;
+  animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.result-modal-header {
+  padding: 32px 28px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.result-icon-badge {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.result-icon-badge.status-won {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.result-icon-badge.status-lost {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.result-icon-badge.status-expired {
+  background-color: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.result-modal-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.result-modal-desc {
+  font-size: 0.9375rem;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.result-modal-body {
+  padding: 12px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Secret Word Display Box */
+.result-word-container {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 20px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.result-word-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.result-word-tiles {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.result-word-tile {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.125rem;
+  color: #0f172a;
+  background-color: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.result-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  font-size: 0.875rem;
+  color: #475569;
+  width: 100%;
+  padding-top: 4px;
+}
+
+.result-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.result-stat-item strong {
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-modal-footer {
+  padding: 0 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-result-primary {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  min-height: 46px;
+}
+
+.btn-result-primary:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.btn-result-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.result-secondary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.btn-result-secondary {
+  padding: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  min-height: 42px;
+  text-decoration: none;
+}
+
+.btn-result-secondary:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.btn-result-secondary:focus-visible,
+.btn-result-primary:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-modal-backdrop,
+  .result-modal-dialog {
+    animation: none;
+    transition: none;
+  }
+}

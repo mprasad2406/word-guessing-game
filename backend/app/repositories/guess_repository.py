@@ -1,5 +1,6 @@
 """Repository for Guess database operations."""
 
+from datetime import datetime, timezone
 from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,6 +27,7 @@ class GuessRepository:
             guess=guess,
             is_correct=is_correct,
             attempt_number=attempt_number,
+            created_at=datetime.now(timezone.utc),
         )
         self.session.add(guess_entity)
         await self.session.flush()

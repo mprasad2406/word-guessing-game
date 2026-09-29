@@ -65,7 +65,7 @@ export function GameStatusCard({ gameState, timeRemaining, elapsedSeconds }) {
       <div className="card-body p-4">
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
           <div className="d-flex align-items-center gap-2">
-            <span className="text-muted small text-uppercase fw-semibold">Game Session #{gameState.id}</span>
+            <span className="text-muted small text-uppercase fw-semibold">Live Word Match</span>
             {getStatusBadge()}
           </div>
           <div className="text-muted small">

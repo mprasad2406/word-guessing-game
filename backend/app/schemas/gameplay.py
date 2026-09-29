@@ -55,6 +55,7 @@ class GameStateResponse(BaseModel):
     """
 
     id: int
+    public_id: str
     status: GameStatus
     word_length: int
     masked_pattern: str
@@ -91,6 +92,7 @@ class GameHistoryItem(BaseModel):
     """Summary item for player game history list."""
 
     id: int
+    public_id: str
     status: GameStatus
     word_length: int
     max_attempts: int

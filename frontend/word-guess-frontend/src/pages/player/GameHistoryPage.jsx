@@ -1,8 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PageLoader } from "../../components/common/PageLoader";
+import { toast } from "react-toastify";
+import {
+  Play,
+  Home,
+  ChevronRight,
+  ChevronLeft,
+  Filter,
+  Trophy,
+  XCircle,
+  Clock,
+  Activity,
+  ArrowRight,
+  Inbox,
+  AlertTriangle,
+  RotateCcw,
+  Sparkles,
+} from "lucide-react";
 import { gameplayService } from "../../services/gameplayService";
 import { formatServerDate, formatDuration } from "../../utils/dateUtils";
+import { playerPaths } from "../../routes/paths";
+import "./GameHistory.css";
 
 export function GameHistoryPage() {
   const [historyData, setHistoryData] = useState({
@@ -17,42 +35,44 @@ export function GameHistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Start New Game Modal State
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [isStartingGame, setIsStartingGame] = useState(false);
+
   const navigate = useNavigate();
 
+  // Close modal on Escape key press
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadHistory() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await gameplayService.getGameHistory({
-          status: statusFilter,
-          page: currentPage,
-          pageSize: 10,
-        });
-
-        if (isMounted) {
-          setHistoryData(response);
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.error("Failed to load history:", err);
-          setError(err?.message || "Failed to load game history.");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && showStartModal && !isStartingGame) {
+        setShowStartModal(false);
       }
-    }
-
-    loadHistory();
-
-    return () => {
-      isMounted = false;
     };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showStartModal, isStartingGame]);
+
+  const loadHistory = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await gameplayService.getGameHistory({
+        status: statusFilter,
+        page: currentPage,
+        pageSize: 10,
+      });
+      setHistoryData(response);
+    } catch (err) {
+      console.error("Failed to load history:", err);
+      setError(err?.message || "Failed to load game history. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadHistory();
   }, [statusFilter, currentPage]);
 
   const handleFilterChange = (status) => {
@@ -60,218 +80,543 @@ export function GameHistoryPage() {
     setCurrentPage(1); // Reset to first page on filter change
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "WON":
-        return <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i className="bi bi-trophy-fill me-1"></i> Won</span>;
-      case "LOST":
-        return <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1"><i className="bi bi-x-circle-fill me-1"></i> Lost</span>;
-      case "EXPIRED":
-        return <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1"><i className="bi bi-clock-history me-1"></i> Expired</span>;
-      case "ACTIVE":
-      default:
-        return <span className="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1"><i className="bi bi-play-circle-fill me-1"></i> Active</span>;
+  const handleStartGame = async () => {
+    if (isStartingGame) return;
+
+    setIsStartingGame(true);
+    try {
+      const newGame = await gameplayService.startGame();
+      setShowStartModal(false);
+      toast.success("Game created! Let's guess the word!");
+      navigate(playerPaths.matchDetails(newGame.public_id));
+    } catch (err) {
+      console.error("Failed to create game:", err);
+      const errMsg =
+        err?.message || "Failed to start a new game session. Please try again later.";
+      toast.error(errMsg);
+      setShowStartModal(false);
+    } finally {
+      setIsStartingGame(false);
     }
   };
 
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "WON":
+        return (
+          <span className="game-status-badge status-won">
+            <Trophy size={13} strokeWidth={2.5} />
+            <span>Won</span>
+          </span>
+        );
+      case "LOST":
+        return (
+          <span className="game-status-badge status-lost">
+            <XCircle size={13} strokeWidth={2.5} />
+            <span>Lost</span>
+          </span>
+        );
+      case "EXPIRED":
+        return (
+          <span className="game-status-badge status-expired">
+            <Clock size={13} strokeWidth={2.5} />
+            <span>Expired</span>
+          </span>
+        );
+      case "ACTIVE":
+      default:
+        return (
+          <span className="game-status-badge status-active">
+            <Activity size={13} strokeWidth={2.5} />
+            <span>Active</span>
+          </span>
+        );
+    }
+  };
+
+  const getEmptyStateConfig = () => {
+    switch (statusFilter) {
+      case "WON":
+        return {
+          icon: <Trophy size={26} />,
+          title: "No wins yet",
+          desc: "Your winning game sessions will appear here once you solve a secret word.",
+          actionText: "View All Games",
+          actionHandler: () => handleFilterChange("ALL"),
+        };
+      case "LOST":
+        return {
+          icon: <XCircle size={26} />,
+          title: "No lost games",
+          desc: "You don't have any games marked as lost.",
+          actionText: "View All Games",
+          actionHandler: () => handleFilterChange("ALL"),
+        };
+      case "EXPIRED":
+        return {
+          icon: <Clock size={26} />,
+          title: "No expired games",
+          desc: "You don't have any expired game sessions.",
+          actionText: "View All Games",
+          actionHandler: () => handleFilterChange("ALL"),
+        };
+      case "ACTIVE":
+        return {
+          icon: <Activity size={26} />,
+          title: "No active games",
+          desc: "You don't have any games currently in progress.",
+          actionText: "Play New Game",
+          actionHandler: () => setShowStartModal(true),
+        };
+      case "ALL":
+      default:
+        return {
+          icon: <Inbox size={26} />,
+          title: "No games played yet",
+          desc: "Your completed and active game sessions will appear here.",
+          actionText: "Start Your First Game",
+          actionHandler: () => setShowStartModal(true),
+        };
+    }
+  };
+
+  const emptyState = getEmptyStateConfig();
+
   return (
-    <div className="container py-4" style={{ maxWidth: "1000px" }}>
-      {/* Header */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-        <div>
-          <nav aria-label="breadcrumb">
-            <ol className="breadcrumb mb-1">
-              <li className="breadcrumb-item">
-                <Link to="/player" className="text-decoration-none">
-                  <i className="bi bi-house-door me-1"></i>Lobby
-                </Link>
-              </li>
-              <li className="breadcrumb-item active" aria-current="page">
-                Game History
-              </li>
-            </ol>
+    <div className="history-container">
+      {/* 1. Page Header Section */}
+      <section className="history-header-section" aria-label="Page Header">
+        <div className="history-header-left">
+          <nav className="history-breadcrumb" aria-label="Breadcrumb">
+            <Link to="/player">
+              <Home size={14} />
+              <span>Lobby</span>
+            </Link>
+            <ChevronRight size={13} className="history-breadcrumb-separator" />
+            <span className="history-breadcrumb-current" aria-current="page">
+              Game History
+            </span>
           </nav>
-          <h2 className="fw-bold mb-0">Your Game History</h2>
+          <h1 className="history-page-title">Your Game History</h1>
+          <p className="history-page-subtitle">
+            Review your previous games, track your results and revisit individual sessions.
+          </p>
         </div>
 
-        <Link to="/player" className="btn btn-primary d-inline-flex align-items-center gap-2">
-          <i className="bi bi-play-fill fs-5"></i>
+        <button
+          type="button"
+          className="btn-play-new-game"
+          onClick={() => setShowStartModal(true)}
+          aria-label="Play New Game"
+        >
+          <Play size={16} fill="#FFFFFF" />
           <span>Play New Game</span>
-        </Link>
-      </div>
+        </button>
+      </section>
 
-      {/* Filter Tabs */}
-      <div className="card shadow-sm border-0 rounded-3 mb-4">
-        <div className="card-body p-3">
-          <div className="d-flex flex-wrap gap-2 align-items-center">
-            <span className="small text-muted fw-semibold me-2">Filter by Status:</span>
-            {["ALL", "WON", "LOST", "EXPIRED", "ACTIVE"].map((status) => (
+      {/* 2. Filter Toolbar (Segmented Controls) */}
+      <section className="history-filter-card" aria-label="Filter Toolbar">
+        <div className="filter-toolbar">
+          <span className="filter-label-text">
+            <Filter size={15} />
+            <span>Filter by:</span>
+          </span>
+
+          <div
+            className="filter-buttons-scroll"
+            role="toolbar"
+            aria-label="Filter games by status"
+          >
+            {[
+              { id: "ALL", label: "All Games" },
+              { id: "WON", label: "Won" },
+              { id: "LOST", label: "Lost" },
+              { id: "EXPIRED", label: "Expired" },
+              { id: "ACTIVE", label: "Active" },
+            ].map(({ id, label }) => (
               <button
-                key={status}
+                key={id}
                 type="button"
-                className={`btn btn-sm ${
-                  statusFilter === status
-                    ? "btn-primary fw-semibold"
-                    : "btn-outline-secondary"
-                } rounded-pill px-3`}
-                onClick={() => handleFilterChange(status)}
+                className={`filter-btn ${statusFilter === id ? "active" : ""}`}
+                onClick={() => handleFilterChange(id)}
+                aria-pressed={statusFilter === id}
               >
-                {status === "ALL" ? "All Games" : status.charAt(0) + status.slice(1).toLowerCase()}
+                {label}
               </button>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Error state */}
+      {/* 3. Error Alert */}
       {error && (
-        <div className="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
-          <i className="bi bi-exclamation-triangle-fill"></i>
-          <div>{error}</div>
+        <div className="history-alert-danger" role="alert">
+          <div className="d-flex align-items-center gap-2">
+            <AlertTriangle size={20} className="flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            type="button"
+            className="btn-retry-history"
+            onClick={loadHistory}
+          >
+            <RotateCcw size={14} />
+            <span>Retry</span>
+          </button>
         </div>
       )}
 
-      {/* Table Content */}
-      <div className="card shadow-sm border-0 rounded-3 overflow-hidden">
+      {/* 4. Table & Cards Section */}
+      <section className="history-table-card" aria-label="Game History List">
         {isLoading ? (
-          <div className="p-5">
-            <PageLoader text="Loading your match history..." />
-          </div>
-        ) : historyData.items.length === 0 ? (
-          <div className="text-center py-5 px-3">
-            <i className="bi bi-inbox fs-1 text-secondary opacity-50 d-block mb-3"></i>
-            <h5 className="fw-semibold text-secondary">No games found</h5>
-            <p className="text-muted small mb-4">
-              {statusFilter !== "ALL"
-                ? `You don't have any games marked as ${statusFilter.toLowerCase()}.`
-                : "You haven't played any games yet. Start guessing now!"}
-            </p>
-            <Link to="/player" className="btn btn-primary px-4">
-              Start Your First Game
-            </Link>
-          </div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
-              <thead className="table-light text-secondary small text-uppercase">
-                <tr>
-                  <th scope="col" className="ps-4">Game #</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Word</th>
-                  <th scope="col">Attempts</th>
-                  <th scope="col">Hints</th>
-                  <th scope="col">Duration</th>
-                  <th scope="col">Date Played</th>
-                  <th scope="col" className="text-end pe-4">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {historyData.items.map((game) => (
-                  <tr key={game.id}>
-                    <td className="ps-4 fw-semibold font-monospace">#{game.id}</td>
-                    <td>{getStatusBadge(game.status)}</td>
-                    <td>
-                      {game.final_word ? (
-                        <span className="font-monospace fw-bold text-uppercase text-dark">
-                          {game.final_word}
-                        </span>
-                      ) : (
-                        <span className="text-muted small">
-                          {game.word_length} letters (Hidden)
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <span className="small">
-                        <strong>{game.attempts_used}</strong> / {game.max_attempts}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="small text-muted">{game.hints_used}</span>
-                    </td>
-                    <td>
-                      <span className="small text-muted font-monospace">
-                        {game.duration_seconds != null ? formatDuration(game.duration_seconds) : "—"}
-                      </span>
-                    </td>
-                    <td className="small text-muted">{formatServerDate(game.started_at)}</td>
-                    <td className="text-end pe-4">
-                      <Link
-                        to={`/player/game/${game.id}`}
-                        className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
-                      >
-                        <span>{game.status === "ACTIVE" ? "Resume" : "View"}</span>
-                        <i className="bi bi-chevron-right"></i>
-                      </Link>
-                    </td>
+          <>
+            {/* Desktop / Tablet Skeleton Table */}
+            <div className="table-responsive-custom">
+              <table className="game-history-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Played On</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Word</th>
+                    <th scope="col">Attempts</th>
+                    <th scope="col">Hints</th>
+                    <th scope="col">Duration</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination Footer */}
-        {!isLoading && historyData.pages > 1 && (
-          <div className="card-footer bg-white border-top py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div className="small text-muted">
-              Showing page <strong>{historyData.page}</strong> of <strong>{historyData.pages}</strong> ({historyData.total} total games)
+                </thead>
+                <tbody>
+                  {[1, 2, 3, 4, 5].map((item) => (
+                    <tr key={item}>
+                      <td>
+                        <span className="skeleton-shimmer" style={{ width: "120px", height: "16px" }}></span>
+                      </td>
+                      <td>
+                        <span className="skeleton-shimmer" style={{ width: "70px", height: "22px", borderRadius: "9999px" }}></span>
+                      </td>
+                      <td>
+                        <span className="skeleton-shimmer" style={{ width: "75px", height: "20px" }}></span>
+                      </td>
+                      <td>
+                        <span className="skeleton-shimmer" style={{ width: "40px", height: "16px" }}></span>
+                      </td>
+                      <td>
+                        <span className="skeleton-shimmer" style={{ width: "20px", height: "16px" }}></span>
+                      </td>
+                      <td>
+                        <span className="skeleton-shimmer" style={{ width: "50px", height: "16px" }}></span>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <span className="skeleton-shimmer" style={{ width: "65px", height: "30px", borderRadius: "8px" }}></span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            <nav aria-label="Game history pagination">
-              <ul className="pagination pagination-sm mb-0">
-                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+            {/* Mobile Skeleton Cards */}
+            <div className="history-mobile-cards-list">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="history-mobile-card">
+                  <div className="mobile-card-top-row">
+                    <span className="skeleton-shimmer" style={{ width: "90px", height: "18px" }}></span>
+                    <span className="skeleton-shimmer" style={{ width: "65px", height: "22px", borderRadius: "9999px" }}></span>
+                  </div>
+                  <div>
+                    <span className="skeleton-shimmer" style={{ width: "85px", height: "22px" }}></span>
+                  </div>
+                  <div className="mobile-card-stats-grid">
+                    <div className="mobile-stat-item">
+                      <span className="skeleton-shimmer" style={{ width: "50px", height: "12px", marginBottom: "4px" }}></span>
+                      <span className="skeleton-shimmer" style={{ width: "40px", height: "14px" }}></span>
+                    </div>
+                    <div className="mobile-stat-item">
+                      <span className="skeleton-shimmer" style={{ width: "50px", height: "12px", marginBottom: "4px" }}></span>
+                      <span className="skeleton-shimmer" style={{ width: "20px", height: "14px" }}></span>
+                    </div>
+                    <div className="mobile-stat-item">
+                      <span className="skeleton-shimmer" style={{ width: "50px", height: "12px", marginBottom: "4px" }}></span>
+                      <span className="skeleton-shimmer" style={{ width: "45px", height: "14px" }}></span>
+                    </div>
+                  </div>
+                  <div className="mobile-card-bottom-row">
+                    <span className="skeleton-shimmer" style={{ width: "100%", height: "36px", borderRadius: "8px" }}></span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : historyData.items.length === 0 ? (
+          <div className="history-empty-state-card">
+            <div className="empty-state-icon-circle">{emptyState.icon}</div>
+            <h2 className="empty-state-title">{emptyState.title}</h2>
+            <p className="empty-state-desc">{emptyState.desc}</p>
+            <button
+              type="button"
+              className="btn-empty-action"
+              onClick={emptyState.actionHandler}
+            >
+              <span>{emptyState.actionText}</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Desktop / Tablet Data Table */}
+            <div className="table-responsive-custom">
+              <table className="game-history-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Played On</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Word</th>
+                    <th scope="col">Attempts</th>
+                    <th scope="col">Hints</th>
+                    <th scope="col">Duration</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyData.items.map((game) => (
+                    <tr key={game.public_id || game.id}>
+                      <td>
+                        <span className="date-cell-text">
+                          {formatServerDate(game.started_at)}
+                        </span>
+                      </td>
+                      <td>{getStatusBadge(game.status)}</td>
+                      <td>
+                        {game.final_word ? (
+                          <span className="word-display-revealed">
+                            {game.final_word}
+                          </span>
+                        ) : (
+                          <span className="word-display-hidden">
+                            {game.word_length || 5} letters (Hidden)
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <span className="num-tabular">
+                          {game.attempts_used} / {game.max_attempts}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="text-tabular-muted">
+                          {game.hints_used}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="text-tabular-muted">
+                          {game.duration_seconds != null
+                            ? formatDuration(game.duration_seconds)
+                            : "—"}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <Link
+                          to={playerPaths.matchDetails(game.public_id)}
+                          className="btn-table-view"
+                          aria-label={`${game.status === "ACTIVE" ? "Resume" : "View"} match details`}
+                        >
+                          <span>{game.status === "ACTIVE" ? "Resume" : "View"}</span>
+                          <ChevronRight size={14} />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card Layout (Under 768px) */}
+            <div className="history-mobile-cards-list">
+              {historyData.items.map((game) => (
+                <div key={game.public_id || game.id} className="history-mobile-card">
+                  <div className="mobile-card-top-row">
+                    <span className="date-cell-text" style={{ fontSize: "0.8125rem", color: "#64748b", fontWeight: "600" }}>
+                      {formatServerDate(game.started_at)}
+                    </span>
+                    {getStatusBadge(game.status)}
+                  </div>
+
+                  <div>
+                    {game.final_word ? (
+                      <span className="word-display-revealed">
+                        {game.final_word}
+                      </span>
+                    ) : (
+                      <span className="word-display-hidden">
+                        {game.word_length || 5} letters (Hidden)
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mobile-card-stats-grid">
+                    <div className="mobile-stat-item">
+                      <span className="mobile-stat-label">Attempts</span>
+                      <span className="mobile-stat-value">
+                        {game.attempts_used} / {game.max_attempts}
+                      </span>
+                    </div>
+                    <div className="mobile-stat-item">
+                      <span className="mobile-stat-label">Hints Used</span>
+                      <span className="mobile-stat-value">{game.hints_used}</span>
+                    </div>
+                    <div className="mobile-stat-item">
+                      <span className="mobile-stat-label">Duration</span>
+                      <span className="mobile-stat-value">
+                        {game.duration_seconds != null
+                          ? formatDuration(game.duration_seconds)
+                          : "—"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mobile-card-bottom-row">
+                    <Link
+                      to={playerPaths.matchDetails(game.public_id)}
+                      className="btn-table-view w-100 justify-content-center"
+                    >
+                      <span>{game.status === "ACTIVE" ? "Resume Game" : "View Details"}</span>
+                      <ChevronRight size={14} />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {historyData.pages > 1 && (
+              <div className="history-pagination-footer">
+                <span className="pagination-info-text">
+                  Showing page <strong>{historyData.page}</strong> of{" "}
+                  <strong>{historyData.pages}</strong> ({historyData.total} total games)
+                </span>
+
+                <nav className="pagination-nav" aria-label="Game history pagination">
                   <button
                     type="button"
-                    className="page-link"
+                    className="pagination-control-btn"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
+                    aria-label="Previous Page"
                   >
-                    Previous
+                    <ChevronLeft size={16} />
                   </button>
-                </li>
 
-                {Array.from({ length: historyData.pages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === historyData.pages || Math.abs(p - currentPage) <= 2)
-                  .map((pageNum, idx, arr) => {
-                    const prev = arr[idx - 1];
-                    const showEllipsis = prev && pageNum - prev > 1;
+                  {Array.from({ length: historyData.pages }, (_, i) => i + 1)
+                    .filter(
+                      (p) =>
+                        p === 1 ||
+                        p === historyData.pages ||
+                        Math.abs(p - currentPage) <= 2
+                    )
+                    .map((pageNum, idx, arr) => {
+                      const prev = arr[idx - 1];
+                      const showEllipsis = prev && pageNum - prev > 1;
 
-                    return (
-                      <React.Fragment key={pageNum}>
-                        {showEllipsis && (
-                          <li className="page-item disabled">
-                            <span className="page-link">...</span>
-                          </li>
-                        )}
-                        <li className={`page-item ${currentPage === pageNum ? "active" : ""}`}>
+                      return (
+                        <React.Fragment key={pageNum}>
+                          {showEllipsis && (
+                            <span className="pagination-ellipsis" aria-hidden="true">
+                              ...
+                            </span>
+                          )}
                           <button
                             type="button"
-                            className="page-link"
+                            className={`pagination-control-btn ${
+                              currentPage === pageNum ? "active" : ""
+                            }`}
                             onClick={() => setCurrentPage(pageNum)}
+                            aria-current={currentPage === pageNum ? "page" : undefined}
                           >
                             {pageNum}
                           </button>
-                        </li>
-                      </React.Fragment>
-                    );
-                  })}
+                        </React.Fragment>
+                      );
+                    })}
 
-                <li className={`page-item ${currentPage === historyData.pages ? "disabled" : ""}`}>
                   <button
                     type="button"
-                    className="page-link"
-                    onClick={() => setCurrentPage((p) => Math.min(historyData.pages, p + 1))}
+                    className="pagination-control-btn"
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(historyData.pages, p + 1))
+                    }
                     disabled={currentPage === historyData.pages}
+                    aria-label="Next Page"
                   >
-                    Next
+                    <ChevronRight size={16} />
                   </button>
-                </li>
-              </ul>
-            </nav>
-          </div>
+                </nav>
+              </div>
+            )}
+          </>
         )}
-      </div>
+      </section>
+
+      {/* Start New Game Confirmation Modal */}
+      {showStartModal && (
+        <div
+          className="modal-backdrop-custom"
+          role="presentation"
+          onClick={() => !isStartingGame && setShowStartModal(false)}
+        >
+          <div
+            className="modal-dialog-custom"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="start-modal-title"
+            aria-describedby="start-modal-description"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content-custom">
+              <div className="modal-icon-badge primary">
+                <Sparkles size={26} strokeWidth={2.2} />
+              </div>
+              <h2 id="start-modal-title" className="modal-title-custom">
+                Start a new game?
+              </h2>
+              <p id="start-modal-description" className="modal-desc-custom">
+                You'll have 5 attempts to guess the secret 5-letter word. Ready to begin?
+              </p>
+              <div className="modal-actions-custom">
+                <button
+                  type="button"
+                  className="modal-btn-cancel"
+                  onClick={() => setShowStartModal(false)}
+                  disabled={isStartingGame}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="modal-btn-confirm-primary"
+                  onClick={handleStartGame}
+                  disabled={isStartingGame}
+                  autoFocus
+                >
+                  {isStartingGame ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
+                      <span>Starting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play size={16} fill="#FFFFFF" />
+                      <span>Start Game</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

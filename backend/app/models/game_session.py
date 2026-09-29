@@ -1,9 +1,10 @@
 """SQLAlchemy model for GameSession entity and GameStatus enum."""
 
 import enum
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
-from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Integer
+from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -32,6 +33,13 @@ class GameSession(Base, TimestampMixin):
         primary_key=True,
         index=True,
         autoincrement=True,
+    )
+    public_id: Mapped[str] = mapped_column(
+        String(36),
+        default=lambda: str(uuid.uuid4()),
+        unique=True,
+        nullable=False,
+        index=True,
     )
     player_id: Mapped[int] = mapped_column(
         Integer,

@@ -1,7 +1,7 @@
 """Service for Game creation, whole-word guessing, hints, and player history."""
 
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Union
 
 from app.core.exceptions import (
     DailyLimitReachedException,
@@ -224,17 +224,17 @@ class GameplayService:
 
     async def get_game_state(
         self,
-        session_id: int,
+        session_id: Union[str, int],
         current_user: User,
     ) -> GameStateResponse:
-        """Retrieve current state of a game session. Strictly restricts access to game owner or admin."""
-        session = await self.game_session_repo.get_session_by_id(session_id)
+        """Retrieve current state of a game session. Strictly restricts access to game owner."""
+        session = await self.game_session_repo.get_session_by_identifier(session_id)
         if not session:
-            raise GameNotFoundException(f"Game session {session_id} not found")
+            raise GameNotFoundException("Game session not found")
 
-        # Enforce player ownership strictly
+        # Enforce player ownership strictly (never reveal existence to unauthorized players)
         if session.player_id != current_user.id:
-            raise GameNotFoundException(f"Game session {session_id} not found")
+            raise GameNotFoundException("Game session not found")
 
         # Check time limit expiration if game is currently ACTIVE
         await self._check_time_limit_expiration(session)
@@ -243,7 +243,7 @@ class GameplayService:
 
     async def submit_guess(
         self,
-        session_id: int,
+        session_id: Union[str, int],
         guess_text: str,
         player_id: int,
     ) -> GameStateResponse:
@@ -251,9 +251,9 @@ class GameplayService:
         Submit a whole-word guess attempt against an active game session.
         Acquires row-level lock to ensure atomic attempt tracking.
         """
-        session = await self.game_session_repo.get_session_by_id(session_id, for_update=True)
+        session = await self.game_session_repo.get_session_by_identifier(session_id, for_update=True)
         if not session or session.player_id != player_id:
-            raise GameNotFoundException(f"Game session {session_id} not found")
+            raise GameNotFoundException("Game session not found")
 
         # Check time limit expiration first
         if await self._check_time_limit_expiration(session):
@@ -308,16 +308,16 @@ class GameplayService:
 
     async def request_hint(
         self,
-        session_id: int,
+        session_id: Union[str, int],
         player_id: int,
     ) -> HintResponse:
         """
         Request the hint for the current game session.
         Enforces immutable hint quota and avoids charging repeatedly for already revealed hints.
         """
-        session = await self.game_session_repo.get_session_by_id(session_id, for_update=True)
+        session = await self.game_session_repo.get_session_by_identifier(session_id, for_update=True)
         if not session or session.player_id != player_id:
-            raise GameNotFoundException(f"Game session {session_id} not found")
+            raise GameNotFoundException("Game session not found")
 
         # Check time limit expiration first
         if await self._check_time_limit_expiration(session):
@@ -391,6 +391,7 @@ class GameplayService:
             history_items.append(
                 GameHistoryItem(
                     id=s.id,
+                    public_id=s.public_id,
                     status=s.status,
                     word_length=len(s.word.word),
                     max_attempts=s.max_attempts,
@@ -482,6 +483,7 @@ class GameplayService:
 
         return GameStateResponse(
             id=session.id,
+            public_id=session.public_id,
             status=session.status,
             word_length=word_length,
             masked_pattern=masked_pattern,

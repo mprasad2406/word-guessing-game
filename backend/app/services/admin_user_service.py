@@ -145,6 +145,7 @@ class AdminUserService:
         history_items = [
             GameHistoryItem(
                 id=s.id,
+                public_id=s.public_id,
                 status=s.status,
                 word_length=len(s.word.word),
                 max_attempts=s.max_attempts,

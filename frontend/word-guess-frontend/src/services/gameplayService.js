@@ -23,31 +23,31 @@ export const gameplayService = {
   },
 
   /**
-   * Retrieve state of an existing game session.
-   * @param {number|string} gameId
+   * Retrieve state of an existing game session by public UUID or identifier.
+   * @param {string|number} matchIdentifier
    * @returns {Promise<any>}
    */
-  async getGameState(gameId) {
-    return apiClient.get(`/api/v1/games/${gameId}`);
+  async getGameState(matchIdentifier) {
+    return apiClient.get(`/api/v1/games/${matchIdentifier}`);
   },
 
   /**
    * Submit a whole-word guess attempt.
-   * @param {number|string} gameId
+   * @param {string|number} matchIdentifier
    * @param {string} guess
    * @returns {Promise<any>}
    */
-  async submitGuess(gameId, guess) {
-    return apiClient.post(`/api/v1/games/${gameId}/guess`, { guess });
+  async submitGuess(matchIdentifier, guess) {
+    return apiClient.post(`/api/v1/games/${matchIdentifier}/guess`, { guess });
   },
 
   /**
    * Request a hint for an active game session.
-   * @param {number|string} gameId
+   * @param {string|number} matchIdentifier
    * @returns {Promise<{ hint: string, hints_used: number, hints_remaining: number }>}
    */
-  async requestHint(gameId) {
-    return apiClient.post(`/api/v1/games/${gameId}/hint`);
+  async requestHint(matchIdentifier) {
+    return apiClient.post(`/api/v1/games/${matchIdentifier}/hint`);
   },
 
   /**

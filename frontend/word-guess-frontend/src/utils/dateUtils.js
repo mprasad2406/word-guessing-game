@@ -8,7 +8,9 @@
  */
 export function parseServerDate(dateStr) {
   if (!dateStr) return null;
-  if (dateStr instanceof Date) return dateStr;
+  if (dateStr instanceof Date) {
+    return isNaN(dateStr.getTime()) ? null : dateStr;
+  }
   let str = String(dateStr).trim();
   if (!str) return null;
 
@@ -54,4 +56,43 @@ export function formatDuration(sec) {
   const secs = sec % 60;
   if (mins > 0) return `${mins}m ${secs}s`;
   return `${secs}s`;
+}
+
+/**
+ * Calculates elapsed seconds for a specific guess attempt relative to session start.
+ * Safely accounts for potential database timezone discrepancies and clamps within valid bounds.
+ */
+export function calculateAttemptElapsedSec(attemptCreatedAt, sessionStartedAt, sessionCompletedAt = null) {
+  const attemptDate = parseServerDate(attemptCreatedAt);
+  const startDate = parseServerDate(sessionStartedAt);
+  if (!attemptDate || !startDate) return null;
+
+  let diffSec = Math.floor((attemptDate.getTime() - startDate.getTime()) / 1000);
+
+  const completedDate = parseServerDate(sessionCompletedAt);
+  const totalDurationSec = completedDate
+    ? Math.max(0, Math.floor((completedDate.getTime() - startDate.getTime()) / 1000))
+    : null;
+
+  // Detect timezone discrepancy (e.g. database stored server local time instead of UTC, ~5.5h offset)
+  if (totalDurationSec != null && diffSec > totalDurationSec + 30) {
+    // If diffSec is significantly larger than total duration, check local timezone offset
+    const tzOffsetSec = Math.abs(new Date().getTimezoneOffset() * 60);
+    if (Math.abs(diffSec - tzOffsetSec) <= totalDurationSec + 30) {
+      diffSec = Math.max(0, diffSec - tzOffsetSec);
+    } else {
+      // Clamp to total duration or proportional attempt progress
+      diffSec = Math.min(Math.max(0, diffSec), totalDurationSec);
+    }
+  }
+
+  if (diffSec < 0) {
+    diffSec = 0;
+  }
+
+  if (totalDurationSec != null && diffSec > totalDurationSec) {
+    diffSec = totalDurationSec;
+  }
+
+  return diffSec;
 }

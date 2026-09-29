@@ -1,0 +1,758 @@
+/* ==========================================================================
+   Player Lobby Refined Styles
+   Design Tokens:
+   - Primary: #2563EB / #1D4ED8
+   - Background: #F8FAFC
+   - Surface: #FFFFFF
+   - Text Primary: #0F172A
+   - Text Secondary: #334155 (Enhanced WCAG AA contrast)
+   - Text Muted: #475569
+   - Border: #E2E8F0
+   - Success: #15803D
+   - Warning/Orange: #D97706
+   - Danger: #DC2626
+   ========================================================================== */
+
+.lobby-container {
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: lobbyFadeIn 0.25s ease-out;
+}
+
+/* ==========================================================================
+   Skeleton Shimmer Styles
+   ========================================================================== */
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ==========================================================================
+   1. Welcome Hero Section
+   ========================================================================== */
+
+.lobby-hero-card {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 60%, #3b82f6 100%);
+  border-radius: 16px;
+  padding: 36px 40px;
+  color: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.25), 0 8px 10px -6px rgba(37, 99, 235, 0.15);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+/* Background Subtle Radial Glow */
+.lobby-hero-card::before {
+  content: "";
+  position: absolute;
+  top: -40%;
+  right: -15%;
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+}
+
+.lobby-hero-left {
+  flex: 1;
+  max-width: 620px;
+  z-index: 1;
+}
+
+.lobby-eyebrow-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.lobby-hero-title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+/* Enhanced Secondary Hero Text Contrast */
+.lobby-hero-desc {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: #f1f5f9;
+  font-weight: 400;
+  margin-bottom: 24px;
+}
+
+.lobby-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Hero Action Buttons */
+.btn-start-game {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #ffffff;
+  color: #2563eb;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease;
+  min-height: 48px;
+  text-decoration: none;
+}
+
+.btn-start-game:hover:not(:disabled) {
+  background-color: #f8fafc;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.12);
+}
+
+.btn-start-game:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-start-game:disabled {
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #64748b;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-start-game:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.btn-hero-history {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  min-height: 48px;
+}
+
+.btn-hero-history:hover {
+  background-color: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
+}
+
+.btn-hero-history:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* Hero Right: Neutral, Non-Misleading Word Puzzle Graphic */
+.lobby-hero-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.word-puzzle-graphic-container {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.puzzle-graphic-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+}
+
+.puzzle-tile-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* Refined neutral, consistent letter tiles (no misleading green/orange gameplay colors) */
+.puzzle-tile {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1875rem;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  user-select: none;
+}
+
+.puzzle-tile:hover {
+  transform: translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+.puzzle-tile.tile-highlight {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* ==========================================================================
+   2. Daily Guessing Quota Card
+   ========================================================================== */
+
+.quota-status-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 24px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.quota-left-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.quota-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background-color: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.quota-text-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 2px;
+  line-height: 1.35;
+}
+
+.quota-text-desc {
+  font-size: 0.9375rem;
+  color: #334155;
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.unlimited-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.quota-limited-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.quota-slot-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.quota-slot-pill.completed {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.quota-slot-pill.remaining {
+  background-color: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* ==========================================================================
+   3. Lower Two-Column Grid (How to Play & Player Profile)
+   ========================================================================== */
+
+.lobby-grid-layout {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.lobby-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.lobby-card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lobby-card-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.lobby-card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.lobby-card-body {
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* How to Play Step Items */
+.instruction-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.instruction-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.step-number-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+/* Enhanced Readable Secondary Text */
+.step-description {
+  font-size: 0.9375rem;
+  color: #334155;
+  line-height: 1.55;
+  margin-bottom: 0;
+}
+
+/* Tile Demonstration Box (Step 2) */
+.tile-demo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.tile-demo-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.demo-tile-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.0625rem;
+}
+
+.demo-tile-box.color-green {
+  background-color: #15803d;
+}
+
+.demo-tile-box.color-orange {
+  background-color: #d97706;
+}
+
+.demo-tile-box.color-gray {
+  background-color: #475569;
+}
+
+.demo-tile-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.demo-tile-label.label-green {
+  color: #15803d;
+}
+
+.demo-tile-label.label-orange {
+  color: #d97706;
+}
+
+.demo-tile-label.label-gray {
+  color: #475569;
+}
+
+.demo-tile-desc {
+  font-size: 0.8125rem;
+  color: #334155;
+  line-height: 1.45;
+  margin: 0;
+  font-weight: 450;
+}
+
+/* Player Profile Overview Card (Balanced & Structured) */
+.profile-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-rows-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.profile-info-row:last-child {
+  border-bottom: none;
+}
+
+.profile-row-label-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-row-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.profile-row-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.profile-row-value {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.active-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.active-status-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #15803d;
+  border-radius: 50%;
+}
+
+/* Balanced Profile Tip Box */
+.profile-tip-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.8125rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.profile-tip-icon {
+  color: #2563eb;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.profile-history-action {
+  margin-top: 16px;
+}
+
+.btn-view-match-history {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #2563eb;
+  background-color: #ffffff;
+  border: 1.5px solid #2563eb;
+  border-radius: 10px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 46px;
+}
+
+.btn-view-match-history:hover {
+  background-color: #eff6ff;
+  border-color: #1d4ed8;
+  color: #1d4ed8;
+}
+
+.btn-view-match-history:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Alerts & Warnings
+   ========================================================================== */
+
+.lobby-alert-warning {
+  background-color: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #92400e;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.lobby-alert-danger {
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #991b1b;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Animations & Responsive Breakpoints
+   ========================================================================== */
+
+@keyframes lobbyFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lobby-container,
+  .puzzle-tile,
+  .btn-start-game,
+  .btn-hero-history,
+  .btn-view-match-history,
+  .skeleton-shimmer {
+    animation: none;
+    transition: none;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .lobby-grid-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .lobby-hero-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 28px 24px;
+  }
+
+  .lobby-hero-right {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .lobby-hero-title {
+    font-size: 1.5rem;
+  }
+
+  .lobby-hero-desc {
+    font-size: 0.9375rem;
+  }
+
+  .lobby-hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-start-game,
+  .btn-hero-history {
+    width: 100%;
+  }
+
+  .lobby-hero-right {
+    display: none;
+  }
+
+  .quota-status-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tile-demo-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,688 @@
+/* ==========================================================================
+   Game History Page Styles
+   Design Tokens:
+   - Primary: #2563EB / #1D4ED8
+   - Background: #F8FAFC
+   - Surface: #FFFFFF
+   - Text Primary: #0F172A
+   - Text Secondary: #334155
+   - Text Muted: #475569
+   - Border: #E2E8F0
+   - Success: #15803D
+   - Danger: #DC2626
+   ========================================================================== */
+
+.history-container {
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: historyFadeIn 0.25s ease-out;
+}
+
+/* ==========================================================================
+   Skeleton Shimmer Styles
+   ========================================================================== */
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ==========================================================================
+   1. Page Heading Section
+   ========================================================================== */
+
+.history-header-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.history-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.history-breadcrumb a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s ease;
+}
+
+.history-breadcrumb a:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.history-breadcrumb-separator {
+  color: #94a3b8;
+}
+
+.history-breadcrumb-current {
+  color: #475569;
+  font-weight: 600;
+}
+
+.history-page-title {
+  font-size: 1.875rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.history-page-subtitle {
+  font-size: 0.9375rem;
+  color: #475569;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.btn-play-new-game {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: all 0.15s ease;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.btn-play-new-game:hover:not(:disabled) {
+  background-color: #1d4ed8;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+
+.btn-play-new-game:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   2. Filter Toolbar (Segmented Control)
+   ========================================================================== */
+
+.history-filter-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+}
+
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-label-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.filter-buttons-scroll {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  min-height: 38px;
+}
+
+.filter-btn:hover {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.filter-btn.active {
+  background-color: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.filter-btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   3. Data Table Card & Styles
+   ========================================================================== */
+
+.history-table-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-responsive-custom {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.game-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.game-history-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.game-history-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9375rem;
+  color: #0f172a;
+  vertical-align: middle;
+  transition: background-color 0.15s ease;
+}
+
+.game-history-table tbody tr {
+  min-height: 60px;
+}
+
+.game-history-table tbody tr:hover td {
+  background-color: #f8fafc;
+}
+
+.game-history-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.game-id-cell {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  color: #2563eb;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+.word-display-revealed {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0f172a;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.word-display-hidden {
+  color: #64748b;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.num-tabular {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.text-tabular-muted {
+  font-variant-numeric: tabular-nums;
+  color: #475569;
+}
+
+.date-cell-text {
+  color: #475569;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Table View Action Button */
+.btn-table-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #2563eb;
+  background-color: #ffffff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  min-height: 34px;
+}
+
+.btn-table-view:hover {
+  background-color: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.btn-table-view:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   4. Status Badges
+   ========================================================================== */
+
+.game-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.game-status-badge.status-won {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.game-status-badge.status-lost {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.game-status-badge.status-expired {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.game-status-badge.status-active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+/* ==========================================================================
+   5. Mobile Game Session Cards (Under 768px)
+   ========================================================================== */
+
+.history-mobile-cards-list {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.history-mobile-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.mobile-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-card-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.8125rem;
+}
+
+.mobile-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobile-stat-label {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.mobile-stat-value {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.mobile-card-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+/* ==========================================================================
+   6. Context-Aware Empty State Card
+   ========================================================================== */
+
+.history-empty-state-card {
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 260px;
+}
+
+.empty-state-icon-circle {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background-color: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.empty-state-title {
+  font-size: 1.1875rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.empty-state-desc {
+  font-size: 0.9375rem;
+  color: #475569;
+  max-width: 400px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.btn-empty-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2563eb;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-empty-action:hover {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   7. Error Alert
+   ========================================================================== */
+
+.history-alert-danger {
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #991b1b;
+  font-size: 0.9375rem;
+}
+
+.btn-retry-history {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #991b1b;
+  background-color: #ffffff;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-retry-history:hover {
+  background-color: #fee2e2;
+}
+
+/* ==========================================================================
+   8. Pagination Controls
+   ========================================================================== */
+
+.history-pagination-footer {
+  background-color: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pagination-info-text {
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-control-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #475569;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pagination-control-btn:hover:not(:disabled) {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.pagination-control-btn.active {
+  background-color: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.pagination-control-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background-color: #f8fafc;
+}
+
+.pagination-control-btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+.pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 34px;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   Animations & Responsive Breakpoints
+   ========================================================================== */
+
+@keyframes historyFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .history-container,
+  .skeleton-shimmer,
+  .btn-play-new-game,
+  .btn-table-view {
+    animation: none;
+    transition: none;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .history-header-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-play-new-game {
+    width: 100%;
+  }
+
+  .filter-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .filter-buttons-scroll {
+    width: 100%;
+  }
+
+  /* Switch table to cards on mobile */
+  .table-responsive-custom {
+    display: none;
+  }
+
+  .history-mobile-cards-list {
+    display: flex;
+  }
+
+  .history-pagination-footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}

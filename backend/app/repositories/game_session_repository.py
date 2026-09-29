@@ -1,6 +1,7 @@
 import random
+import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -138,8 +139,9 @@ class GameSessionRepository:
         max_attempts: int,
         settings_snapshot: Dict[str, Any],
     ) -> GameSession:
-        """Create and initialize a new GameSession."""
+        """Create and initialize a new GameSession with a secure UUIDv4 public identifier."""
         session_entity = GameSession(
+            public_id=str(uuid.uuid4()),
             player_id=player_id,
             word_id=word_id,
             status=GameStatus.ACTIVE,
@@ -177,6 +179,41 @@ class GameSessionRepository:
 
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
+
+    async def get_session_by_public_id(
+        self,
+        public_id: str,
+        for_update: bool = False,
+    ) -> Optional[GameSession]:
+        """
+        Retrieve a game session by its public UUID identifier with word and guesses preloaded.
+        Supports row-level locking for atomic gameplay transactions.
+        """
+        query = (
+            select(GameSession)
+            .where(GameSession.public_id == public_id)
+            .options(
+                selectinload(GameSession.word),
+                selectinload(GameSession.guesses),
+            )
+        )
+        if for_update:
+            query = query.with_for_update()
+
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
+    async def get_session_by_identifier(
+        self,
+        identifier: Union[str, int],
+        for_update: bool = False,
+    ) -> Optional[GameSession]:
+        """
+        Retrieve a game session by public UUID or legacy integer ID.
+        """
+        if isinstance(identifier, int) or (isinstance(identifier, str) and identifier.isdigit()):
+            return await self.get_session_by_id(int(identifier), for_update=for_update)
+        return await self.get_session_by_public_id(str(identifier), for_update=for_update)
 
     async def list_player_sessions(
         self,

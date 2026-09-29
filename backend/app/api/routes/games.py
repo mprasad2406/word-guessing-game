@@ -86,20 +86,20 @@ async def get_game_history(
 
 
 @router.get(
-    "/{game_id}",
+    "/{identifier}",
     response_model=ApiResponse[GameStateResponse],
     status_code=status.HTTP_200_OK,
     summary="Get current game state",
-    description="Retrieves current game progress, remaining attempts, and guesses. Restricted to game owner player.",
+    description="Retrieves current game progress, remaining attempts, and guesses by public identifier. Restricted to game owner.",
 )
 async def get_game_state(
-    game_id: int,
+    identifier: str,
     current_player: User = Depends(require_player),
     gameplay_service: GameplayService = Depends(get_gameplay_service),
 ) -> ApiResponse[GameStateResponse]:
     """Retrieve state of an ongoing or completed game."""
     game_state = await gameplay_service.get_game_state(
-        session_id=game_id,
+        session_id=identifier,
         current_user=current_player,
     )
     return ApiResponse.success_response(
@@ -109,21 +109,21 @@ async def get_game_state(
 
 
 @router.post(
-    "/{game_id}/guess",
+    "/{identifier}/guess",
     response_model=ApiResponse[GameStateResponse],
     status_code=status.HTTP_200_OK,
     summary="Submit a whole-word guess",
-    description="Submits a word guess against an active game session. Updates attempts and detects win/loss. Restricted to players.",
+    description="Submits a word guess against an active game session by public identifier. Updates attempts and detects win/loss. Restricted to players.",
 )
 async def submit_guess(
-    game_id: int,
+    identifier: str,
     payload: GuessRequest,
     current_player: User = Depends(require_player),
     gameplay_service: GameplayService = Depends(get_gameplay_service),
 ) -> ApiResponse[GameStateResponse]:
     """Submit a whole-word guess attempt."""
     game_state = await gameplay_service.submit_guess(
-        session_id=game_id,
+        session_id=identifier,
         guess_text=payload.guess,
         player_id=current_player.id,
     )
@@ -137,20 +137,20 @@ async def submit_guess(
 
 
 @router.post(
-    "/{game_id}/hint",
+    "/{identifier}/hint",
     response_model=ApiResponse[HintResponse],
     status_code=status.HTTP_200_OK,
     summary="Request a hint",
-    description="Reveals the configured word hint. Enforces hint quota from the immutable session settings snapshot. Restricted to players.",
+    description="Reveals the configured word hint by public identifier. Enforces hint quota from the immutable session settings snapshot. Restricted to players.",
 )
 async def request_hint(
-    game_id: int,
+    identifier: str,
     current_player: User = Depends(require_player),
     gameplay_service: GameplayService = Depends(get_gameplay_service),
 ) -> ApiResponse[HintResponse]:
     """Request a hint for the current game session."""
     hint_result = await gameplay_service.request_hint(
-        session_id=game_id,
+        session_id=identifier,
         player_id=current_player.id,
     )
     return ApiResponse.success_response(
