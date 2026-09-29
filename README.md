@@ -37,7 +37,7 @@ An enterprise-grade, asynchronous **Word Guessing Game** platform built using **
 
 ## <img src="https://api.iconify.design/lucide:camera.svg?color=%233b82f6" width="22" height="22" style="vertical-align: middle;" /> Visual Showcase & Screenshots
 
-> <img src="https://api.iconify.design/lucide:info.svg?color=%233b82f6" width="16" height="16" style="vertical-align: middle;" /> Place your application screenshots inside the [`docs/images/`](docs/images/) directory using the designated filenames below.
+>
 
 ### <img src="https://api.iconify.design/lucide:layout.svg?color=%232563eb" width="18" height="18" style="vertical-align: middle;" /> 1. Landing Page & Player Lobby
 The primary entry points providing modern gaming presentation, lifetime player performance cards, winning streak indicators, and quick match launching.
