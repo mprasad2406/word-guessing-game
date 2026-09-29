@@ -1,16 +1,15 @@
-import React, { useState, useRef, useEffect } from "react";
-import { ArrowRight, AlertCircle } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Check, AlertCircle } from "lucide-react";
 
 /**
  * LiveGuessInput:
- * Clean, modern word-entry input positioned directly below the guessing board.
- * Synchronized with the board's active row, providing instant character counting,
- * validation feedback, loading state, and keyboard support.
+ * Clean, synchronized text field positioned directly beneath the guessing board.
+ * Synchronized with the active interactive tiles and central draft state.
  */
 export function LiveGuessInput({
   wordLength = 5,
-  currentGuess = "",
-  onGuessChange,
+  draft = "",
+  onDraftChange,
   onGuessSubmit,
   isSubmitting = false,
   disabled = false,
@@ -21,23 +20,15 @@ export function LiveGuessInput({
   const inputRef = useRef(null);
 
   const safeWordLength = Math.max(1, wordLength || 5);
-  const trimmed = (currentGuess || "").trim().toUpperCase();
-  const currentLength = trimmed.length;
+  const cleanDraft = (draft || "").replace(/\s+/g, "").toUpperCase();
+  const currentLength = cleanDraft.length;
   const isExactLength = currentLength === safeWordLength;
-
-  // Auto-focus input on mount or when submission completes
-  useEffect(() => {
-    if (!disabled && !isSubmitting && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [disabled, isSubmitting]);
 
   const handleInputChange = (e) => {
     const rawVal = e.target.value.toUpperCase();
-    // Enforce alphabetic letters only
     if (rawVal === "" || /^[A-Z]+$/.test(rawVal)) {
       if (rawVal.length <= safeWordLength) {
-        onGuessChange(rawVal);
+        onDraftChange(rawVal);
         if (validationError) setValidationError("");
       }
     } else {
@@ -50,21 +41,21 @@ export function LiveGuessInput({
     e?.preventDefault();
     if (disabled || isSubmitting) return;
 
-    if (!trimmed) {
+    if (!cleanDraft) {
       setValidationError(`Please enter a ${safeWordLength}-letter word.`);
       onTriggerShake?.();
       inputRef.current?.focus();
       return;
     }
 
-    if (trimmed.length < safeWordLength) {
-      setValidationError(`Enter a complete ${safeWordLength}-letter word (${trimmed.length}/${safeWordLength}).`);
+    if (cleanDraft.length < safeWordLength) {
+      setValidationError(`Enter a complete ${safeWordLength}-letter word (${cleanDraft.length}/${safeWordLength}).`);
       onTriggerShake?.();
       inputRef.current?.focus();
       return;
     }
 
-    if (!/^[A-Z]+$/.test(trimmed)) {
+    if (!/^[A-Z]+$/.test(cleanDraft)) {
       setValidationError("Only letters A–Z are allowed.");
       onTriggerShake?.();
       inputRef.current?.focus();
@@ -73,19 +64,19 @@ export function LiveGuessInput({
 
     // Check duplicate guess in this session
     const isAlreadyGuessed = previousGuesses.some(
-      (g) => (g.guess || "").toUpperCase() === trimmed
+      (g) => (g.guess || "").toUpperCase() === cleanDraft
     );
     if (isAlreadyGuessed) {
-      setValidationError(`"${trimmed}" has already been submitted in this match.`);
+      setValidationError(`"${cleanDraft}" has already been submitted in this match.`);
       onTriggerShake?.();
       inputRef.current?.focus();
       return;
     }
 
     setValidationError("");
-    const success = await onGuessSubmit(trimmed.toLowerCase());
+    const success = await onGuessSubmit(cleanDraft.toLowerCase());
     if (success) {
-      onGuessChange("");
+      onDraftChange("");
     }
   };
 
@@ -106,8 +97,8 @@ export function LiveGuessInput({
               id="live-word-input"
               type="text"
               className={`live-word-input ${validationError ? "input-invalid" : ""}`}
-              placeholder={`Enter a ${safeWordLength}-letter word`}
-              value={trimmed}
+              placeholder={`Type or click tiles (${safeWordLength} letters)`}
+              value={cleanDraft}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               disabled={disabled || isSubmitting}
@@ -141,8 +132,8 @@ export function LiveGuessInput({
               </>
             ) : (
               <>
+                <Check size={16} strokeWidth={2.5} />
                 <span>Submit Guess</span>
-                <ArrowRight size={16} />
               </>
             )}
           </button>

@@ -26,7 +26,6 @@ export function ActiveGamePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
-  const [currentGuess, setCurrentGuess] = useState("");
   const [isSubmittingGuess, setIsSubmittingGuess] = useState(false);
   const [isRequestingHint, setIsRequestingHint] = useState(false);
   const [isStartingNewGame, setIsStartingNewGame] = useState(false);
@@ -141,7 +140,6 @@ export function ActiveGamePage() {
     try {
       const updatedState = await gameplayService.submitGuess(activeId, guess);
       setGameState(updatedState);
-      setCurrentGuess("");
 
       if (updatedState.status === "WON") {
         toast.success("Awesome! You guessed the secret word!");
@@ -315,8 +313,6 @@ export function ActiveGamePage() {
       {/* 3. Combined Cohesive Gameplay Card (Instruction, Board, Input & Submission) */}
       <LiveGameplayCard
         gameState={gameState}
-        currentGuess={currentGuess}
-        onGuessChange={setCurrentGuess}
         onGuessSubmit={handleGuessSubmit}
         isSubmittingGuess={isSubmittingGuess}
         isGameActive={isGameActive}

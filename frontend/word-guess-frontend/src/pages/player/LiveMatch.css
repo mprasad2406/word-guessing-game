@@ -21,7 +21,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
   animation: liveMatchFadeIn 0.25s ease-out;
 }
 
@@ -40,13 +40,13 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
 }
 
 .live-match-header-left {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .live-breadcrumb {
@@ -172,17 +172,17 @@
 .match-dashboard-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 12px;
 }
 
 .status-card {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   transition: border-color 0.2s ease;
 }
@@ -197,15 +197,15 @@
 .status-card-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 0.8125rem;
   font-weight: 600;
   color: #475569;
 }
 
 .status-icon-badge {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
@@ -269,14 +269,14 @@
 }
 
 .status-value {
-  font-size: 1.25rem; /* 20px */
+  font-size: 1.1875rem; /* 19px */
   font-weight: 700;
   color: #0f172a;
   line-height: 1.2;
 }
 
 .status-value-max {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: #64748b;
 }
@@ -304,7 +304,7 @@
 
 .status-progress-track {
   width: 100%;
-  height: 6px;
+  height: 5px;
   background-color: #f1f5f9;
   border-radius: 9999px;
   overflow: hidden;
@@ -357,10 +357,10 @@
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  padding: 24px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
@@ -375,7 +375,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .gameplay-instruction-badge {
@@ -385,7 +385,7 @@
   background-color: #f1f5f9;
   color: #475569;
   border: 1px solid #e2e8f0;
-  padding: 3px 10px;
+  padding: 2px 10px;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -394,7 +394,7 @@
 }
 
 .gameplay-instruction-text {
-  font-size: 0.9375rem; /* 15px */
+  font-size: 0.875rem; /* 14px */
   color: #334155;
   margin: 0;
 }
@@ -405,14 +405,204 @@
 }
 
 /* ==========================================================================
-   4. Guessing Board & Letter Tiles
+   4. Intelligent Suggestion Banner
+   ========================================================================== */
+
+.intelligent-suggestion-card {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  animation: bannerFadeIn 0.2s ease-out;
+}
+
+.intelligent-suggestion-card.all-letters-found {
+  background: linear-gradient(135deg, #fef3c7 0%, #eff6ff 100%);
+  border-color: #fde68a;
+}
+
+.suggestion-text-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.suggestion-icon-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background-color: #2563eb;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.all-letters-found .suggestion-icon-badge {
+  background-color: #d97706;
+}
+
+.suggestion-message {
+  font-size: 0.8125rem;
+  color: #1e293b;
+  line-height: 1.4;
+}
+
+.suggestion-message strong {
+  color: #0f172a;
+}
+
+.suggestion-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-suggestion-prepare {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 32px;
+}
+
+.btn-suggestion-prepare:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.btn-suggestion-shuffle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #78350f;
+  background-color: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 32px;
+}
+
+.btn-suggestion-shuffle:hover:not(:disabled) {
+  background-color: #fde68a;
+}
+
+@keyframes bannerFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   5. Draft Editing Toolbar
+   ========================================================================== */
+
+.draft-toolbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 2px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 10px;
+}
+
+.draft-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-toolbar-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 0.75rem; /* 12px */
+  font-weight: 600;
+  color: #475569;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 30px;
+}
+
+.btn-toolbar-tool:hover:not(:disabled) {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.btn-toolbar-tool:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.draft-swap-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  animation: swapPulse 1.5s infinite;
+}
+
+@keyframes swapPulse {
+  0%, 100% { border-color: #fde68a; }
+  50% { border-color: #d97706; }
+}
+
+.swap-icon-pulse {
+  color: #d97706;
+}
+
+.btn-swap-cancel {
+  background: none;
+  border: none;
+  color: #92400e;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   6. Guessing Board & Interactive Letter Tiles
    ========================================================================== */
 
 .live-board-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .live-board-grid {
@@ -420,14 +610,48 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
-  max-width: 380px;
+  max-width: 440px;
   margin: 0 auto;
+}
+
+.board-row-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
 }
 
 .board-row {
   display: flex;
   justify-content: center;
   gap: 8px;
+}
+
+.btn-row-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 600;
+  color: #64748b;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: absolute;
+  right: -58px;
+  opacity: 0.7;
+}
+
+.board-row-container:hover .btn-row-copy,
+.board-row-container:focus-within .btn-row-copy {
+  opacity: 1;
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
 }
 
 .board-tile {
@@ -442,7 +666,8 @@
   line-height: 1;
   user-select: none;
   box-sizing: border-box;
-  transition: transform 0.12s ease, border-color 0.15s ease, background-color 0.2s ease;
+  position: relative;
+  transition: transform 0.12s ease, border-color 0.15s ease, background-color 0.2s ease, box-shadow 0.15s ease;
 }
 
 .tile-letter {
@@ -472,24 +697,61 @@
   border-color: #475569;
 }
 
-/* Active Interactive Row Tiles */
+/* Active Interactive Editable Row Tiles */
 .tile-active {
   background-color: #ffffff;
   border: 2px solid #cbd5e1;
   color: #0f172a;
+  cursor: pointer;
+}
+
+.tile-active:hover {
+  border-color: #94a3b8;
+  background-color: #f8fafc;
+}
+
+.tile-active:focus-visible,
+.tile-active.tile-selected {
+  outline: none;
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  transform: scale(1.02);
+}
+
+.tile-active.tile-swap-source {
+  border-color: #d97706;
+  background-color: #fffbeb;
+  color: #92400e;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.25);
+  transform: scale(1.04);
+}
+
+.tile-swap-indicator-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background-color: #d97706;
+  color: #ffffff;
+  border-radius: 4px;
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tile-active.tile-drag-over {
+  border: 2px dashed #2563eb;
+  background-color: #dbeafe;
+  transform: scale(1.05);
 }
 
 .tile-active.tile-filled {
   background-color: #eff6ff;
-  border-color: #2563eb;
+  border-color: #93c5fd;
   color: #1d4ed8;
-  transform: scale(1.02);
-  animation: tilePop 0.12s ease-out;
-}
-
-.tile-active.tile-cursor {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 /* Future Unused Tiles */
@@ -500,27 +762,15 @@
 
 /* Board Animations */
 @keyframes tilePop {
-  0% {
-    transform: scale(0.92);
-  }
-  60% {
-    transform: scale(1.06);
-  }
-  100% {
-    transform: scale(1.02);
-  }
+  0% { transform: scale(0.92); }
+  60% { transform: scale(1.06); }
+  100% { transform: scale(1.02); }
 }
 
 @keyframes tileFlip {
-  0% {
-    transform: rotateX(0deg);
-  }
-  50% {
-    transform: rotateX(90deg);
-  }
-  100% {
-    transform: rotateX(0deg);
-  }
+  0% { transform: rotateX(0deg); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
 }
 
 .tile-flip-animate {
@@ -546,7 +796,7 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: 16px;
-  padding-top: 6px;
+  padding-top: 4px;
 }
 
 .legend-item {
@@ -589,15 +839,15 @@
 }
 
 /* ==========================================================================
-   5. Integrated Word Entry Form & Submit Button
+   7. Integrated Word Entry Form & Submit Button
    ========================================================================== */
 
 .gameplay-input-section {
   width: 100%;
-  max-width: 460px;
+  max-width: 480px;
   margin: 0 auto;
   border-top: 1px solid #f1f5f9;
-  padding-top: 18px;
+  padding-top: 16px;
 }
 
 .live-guess-form {
@@ -655,7 +905,7 @@
 }
 
 .live-word-input::placeholder {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 400;
   color: #94a3b8;
   letter-spacing: normal;
@@ -683,10 +933,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   height: 48px;
-  padding: 0 20px;
-  font-size: 0.9375rem; /* 15px */
+  padding: 0 18px;
+  font-size: 0.875rem; /* 14px */
   font-weight: 600;
   color: #ffffff;
   background-color: #2563eb;
@@ -724,9 +974,7 @@
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .live-validation-error {
@@ -744,7 +992,7 @@
 }
 
 /* ==========================================================================
-   6. Supporting Sections (Hint & Previous Guesses)
+   8. Supporting Sections (Hint & Previous Guesses)
    ========================================================================== */
 
 .live-supporting-grid {
@@ -758,10 +1006,10 @@
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  padding: 18px 20px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
@@ -786,9 +1034,9 @@
 }
 
 .supporting-icon-badge {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -825,7 +1073,7 @@
 .hint-locked-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .hint-prompt-text {
@@ -840,7 +1088,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 7px 14px;
   font-size: 0.8125rem;
   font-weight: 600;
   color: #92400e;
@@ -849,7 +1097,7 @@
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
-  min-height: 36px;
+  min-height: 34px;
   align-self: flex-start;
 }
 
@@ -868,10 +1116,10 @@
   background-color: #fffbeb;
   border: 1px solid #fde68a;
   border-radius: 10px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .hint-unlocked-header {
@@ -911,7 +1159,7 @@
 
 /* Previous Guesses List */
 .empty-guesses-body {
-  padding: 12px 0 6px;
+  padding: 10px 0 4px;
   text-align: center;
 }
 
@@ -933,7 +1181,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: 7px 0;
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -945,7 +1193,7 @@
 .guess-item-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .guess-attempt-badge {
@@ -954,7 +1202,7 @@
   color: #64748b;
   background-color: #f1f5f9;
   border: 1px solid #e2e8f0;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 4px;
 }
 
@@ -1013,7 +1261,7 @@
 }
 
 /* ==========================================================================
-   7. Reusable Modals (HintConfirmModal, ExitMatchModal)
+   9. Reusable Modals (HintConfirmModal, ExitMatchModal)
    ========================================================================== */
 
 .modal-backdrop-custom {
@@ -1200,18 +1448,12 @@
 }
 
 /* ==========================================================================
-   8. Animation Keyframes & Accessibility
+   10. Animation Keyframes & Accessibility
    ========================================================================== */
 
 @keyframes liveMatchFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes modalFadeIn {
@@ -1220,14 +1462,8 @@
 }
 
 @keyframes modalSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1239,7 +1475,9 @@
   .modal-backdrop-custom,
   .modal-card-custom,
   .btn-live-submit,
-  .status-progress-fill {
+  .status-progress-fill,
+  .intelligent-suggestion-card,
+  .draft-swap-indicator {
     animation: none !important;
     transition: none !important;
     transform: none !important;
@@ -1247,7 +1485,7 @@
 }
 
 /* ==========================================================================
-   9. Responsive Breakpoints (Tablet & Mobile)
+   11. Responsive Breakpoints (Tablet & Mobile)
    ========================================================================== */
 
 @media (max-width: 768px) {
@@ -1283,6 +1521,12 @@
     border-radius: 8px;
   }
 
+  .btn-row-copy {
+    position: static;
+    opacity: 1;
+    margin-left: 4px;
+  }
+
   .live-input-row {
     flex-direction: column;
     width: 100%;
@@ -1314,6 +1558,10 @@
   }
 
   .live-gameplay-card {
-    padding: 16px;
+    padding: 14px;
+  }
+
+  .draft-toolbar-container {
+    justify-content: center;
   }
 }
