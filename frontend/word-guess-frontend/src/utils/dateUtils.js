@@ -38,6 +38,42 @@ export function formatServerDate(dateStr) {
 }
 
 /**
+ * Formats a date string into relative time (e.g. "Just now", "5m ago", "2h ago", "Yesterday", "3d ago").
+ */
+export function formatRelativeTime(dateStr) {
+  const d = parseServerDate(dateStr);
+  if (!d) return "Never";
+  const now = new Date();
+  const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000);
+
+  if (diffSec < 0) return "Just now";
+  if (diffSec < 60) return "Just now";
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  if (diffSec < 172800) return "Yesterday";
+  if (diffSec < 604800) return `${Math.floor(diffSec / 86400)}d ago`;
+
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+  });
+}
+
+/**
+ * Formats a date into a clean registration date format (e.g. "Sep 11, 2026").
+ */
+export function formatJoinedDate(dateStr) {
+  const d = parseServerDate(dateStr);
+  if (!d) return "—";
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+/**
  * Formats seconds into MM:SS.
  */
 export function formatSeconds(totalSec) {
@@ -53,7 +89,7 @@ export function formatSeconds(totalSec) {
 export function formatDuration(sec) {
   if (sec == null || isNaN(sec) || sec < 0) return "—";
   const mins = Math.floor(sec / 60);
-  const secs = sec % 60;
+  const secs = Math.round(sec % 60);
   if (mins > 0) return `${mins}m ${secs}s`;
   return `${secs}s`;
 }
@@ -74,14 +110,12 @@ export function calculateAttemptElapsedSec(attemptCreatedAt, sessionStartedAt, s
     ? Math.max(0, Math.floor((completedDate.getTime() - startDate.getTime()) / 1000))
     : null;
 
-  // Detect timezone discrepancy (e.g. database stored server local time instead of UTC, ~5.5h offset)
+  // Detect timezone discrepancy
   if (totalDurationSec != null && diffSec > totalDurationSec + 30) {
-    // If diffSec is significantly larger than total duration, check local timezone offset
     const tzOffsetSec = Math.abs(new Date().getTimezoneOffset() * 60);
     if (Math.abs(diffSec - tzOffsetSec) <= totalDurationSec + 30) {
       diffSec = Math.max(0, diffSec - tzOffsetSec);
     } else {
-      // Clamp to total duration or proportional attempt progress
       diffSec = Math.min(Math.max(0, diffSec), totalDurationSec);
     }
   }

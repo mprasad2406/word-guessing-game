@@ -1,6 +1,7 @@
 """SQLAlchemy model for User."""
 
 import enum
+import uuid
 from sqlalchemy import Boolean, Enum, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -24,6 +25,13 @@ class User(Base, TimestampMixin):
         index=True,
         autoincrement=True,
     )
+    public_id: Mapped[str] = mapped_column(
+        String(36),
+        default=lambda: str(uuid.uuid4()),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
     username: Mapped[str] = mapped_column(
         String(50),
         unique=True,
@@ -46,4 +54,4 @@ class User(Base, TimestampMixin):
     )
 
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, username='{self.username}', role='{self.role}', is_active={self.is_active})>"
+        return f"<User(id={self.id}, public_id='{self.public_id}', username='{self.username}', role='{self.role}', is_active={self.is_active})>"

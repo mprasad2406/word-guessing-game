@@ -9,6 +9,7 @@ from app.models.game_session import GameStatus
 from app.models.user import User, UserRole
 from app.schemas.admin_user import (
     UserListResponse,
+    UserOverviewStatsResponse,
     UserStatsResponse,
     UserStatusUpdateRequest,
 )
@@ -17,6 +18,25 @@ from app.schemas.gameplay import GameHistoryResponse
 from app.services.admin_user_service import AdminUserService
 
 router = APIRouter(prefix="/users", tags=["Admin - Users"])
+
+
+@router.get(
+    "/stats/overview",
+    response_model=ApiResponse[UserOverviewStatsResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Get high-level user statistics",
+    description="Admin-only endpoint to retrieve total registered users, active accounts, blocked accounts, and recent 7-day activity.",
+)
+async def get_users_overview_stats(
+    current_admin: User = Depends(require_admin),
+    user_service: AdminUserService = Depends(get_admin_user_service),
+) -> ApiResponse[UserOverviewStatsResponse]:
+    """Retrieve high-level overview user metrics."""
+    overview = await user_service.get_overview_stats()
+    return ApiResponse.success_response(
+        data=overview,
+        message="User overview statistics retrieved successfully",
+    )
 
 
 @router.get(
@@ -30,6 +50,7 @@ async def list_users(
     role: Optional[UserRole] = Query(None, description="Filter by user role (PLAYER, ADMIN)"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     search: Optional[str] = Query(None, description="Search by username"),
+    sort_by: Optional[str] = Query("newest", description="Sort by newest, oldest, most_games, highest_win_rate, recent_activity"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     current_admin: User = Depends(require_admin),
@@ -40,6 +61,7 @@ async def list_users(
         role=role,
         is_active=is_active,
         search=search,
+        sort_by=sort_by,
         page=page,
         page_size=page_size,
     )
@@ -50,19 +72,19 @@ async def list_users(
 
 
 @router.get(
-    "/{user_id}",
+    "/{user_identifier}",
     response_model=ApiResponse[UserStatsResponse],
     status_code=status.HTTP_200_OK,
     summary="Get detailed user profile and metrics",
-    description="Admin-only endpoint to retrieve detailed profile, gameplay totals, and win rate for a user.",
+    description="Admin-only endpoint to retrieve detailed profile, gameplay totals, and win rate for a user by public_id or integer ID.",
 )
 async def get_user_details(
-    user_id: int,
+    user_identifier: str,
     current_admin: User = Depends(require_admin),
     user_service: AdminUserService = Depends(get_admin_user_service),
 ) -> ApiResponse[UserStatsResponse]:
     """Retrieve detailed user statistics and profile."""
-    user_details = await user_service.get_user_details(user_id=user_id)
+    user_details = await user_service.get_user_details(identifier=user_identifier)
     return ApiResponse.success_response(
         data=user_details,
         message="User profile retrieved successfully",
@@ -70,7 +92,7 @@ async def get_user_details(
 
 
 @router.patch(
-    "/{user_id}/status",
+    "/{user_identifier}/status",
     response_model=ApiResponse[UserStatsResponse],
     status_code=status.HTTP_200_OK,
     summary="Update user active/blocked status",
@@ -78,7 +100,7 @@ async def get_user_details(
 )
 async def update_user_status(
     request: Request,
-    user_id: int,
+    user_identifier: str,
     payload: UserStatusUpdateRequest,
     current_admin: User = Depends(require_admin),
     user_service: AdminUserService = Depends(get_admin_user_service),
@@ -86,7 +108,7 @@ async def update_user_status(
     """Block or unblock a user."""
     client_ip = request.client.host if request.client else None
     updated_user = await user_service.update_user_status(
-        user_id=user_id,
+        identifier=user_identifier,
         is_active=payload.is_active,
         admin_user_id=current_admin.id,
         ip_address=client_ip,
@@ -99,14 +121,14 @@ async def update_user_status(
 
 
 @router.get(
-    "/{user_id}/games",
+    "/{user_identifier}/games",
     response_model=ApiResponse[GameHistoryResponse],
     status_code=status.HTTP_200_OK,
     summary="Get user game history",
     description="Admin-only endpoint to retrieve paginated match history for a specific user.",
 )
 async def get_user_games(
-    user_id: int,
+    user_identifier: str,
     status: Optional[GameStatus] = Query(None, description="Filter by game status"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
@@ -115,7 +137,7 @@ async def get_user_games(
 ) -> ApiResponse[GameHistoryResponse]:
     """Retrieve match history for a user."""
     history = await user_service.get_user_game_history(
-        user_id=user_id,
+        identifier=user_identifier,
         status=status,
         page=page,
         page_size=page_size,

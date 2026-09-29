@@ -1,506 +1,293 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
-import { PageLoader } from "../../components/common/PageLoader";
+import { RefreshCw } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { userService } from "../../services/userService";
+import { UserStats } from "../../components/admin/users/UserStats";
+import { UserFilters } from "../../components/admin/users/UserFilters";
+import { UserTable } from "../../components/admin/users/UserTable";
+import { UserPagination } from "../../components/admin/users/UserPagination";
+import { AccountActionDialog } from "../../components/admin/users/AccountActionDialog";
+import "./UserManagement.css";
 
 export function UserManagementPage() {
   const { user: currentAdmin } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [userData, setUserData] = useState({
-    items: [],
-    total: 0,
-    page: 1,
-    page_size: 20,
-    pages: 1,
-  });
+  // Extract filter state from URL search params
+  const search = searchParams.get("search") || "";
+  const status = searchParams.get("status") || "ALL";
+  const role = searchParams.get("role") || "ALL";
+  const sortBy = searchParams.get("sort") || "newest";
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+  const pageSize = parseInt(searchParams.get("pageSize") || "10", 10);
 
-  const [roleFilter, setRoleFilter] = useState("ALL");
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Local data state
+  const [users, setUsers] = useState([]);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [overviewStats, setOverviewStats] = useState(null);
 
-  // Status toggle confirmation modal
-  const [statusModalUser, setStatusModalUser] = useState(null);
-  const [isProcessingStatus, setIsProcessingStatus] = useState(false);
+  // Loading & status states
+  const [isLoadingList, setIsLoadingList] = useState(true);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState(new Date());
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      setCurrentPage(1);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  // Block/Unblock dialog state
+  const [dialogUser, setDialogUser] = useState(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-  const loadUsers = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const roleParam = roleFilter === "ALL" ? null : roleFilter;
-      const isActiveParam =
-        statusFilter === "ALL" ? null : statusFilter === "ACTIVE";
-
-      const data = await userService.listUsers({
-        role: roleParam,
-        isActive: isActiveParam,
-        search: debouncedSearch,
-        page: currentPage,
-        pageSize: 20,
+  // Helper to update search params
+  const updateParams = useCallback(
+    (newParams) => {
+      const updated = new URLSearchParams(searchParams);
+      Object.entries(newParams).forEach(([key, val]) => {
+        if (
+          val === null ||
+          val === undefined ||
+          val === "" ||
+          (key === "page" && val === 1) ||
+          (key === "pageSize" && val === 10) ||
+          (key === "status" && val === "ALL") ||
+          (key === "role" && val === "ALL") ||
+          (key === "sort" && val === "newest")
+        ) {
+          updated.delete(key);
+        } else {
+          updated.set(key, String(val));
+        }
       });
+      setSearchParams(updated, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
 
-      setUserData(data);
+  // Load Overview Statistics
+  const loadOverviewStats = useCallback(async () => {
+    setIsLoadingStats(true);
+    try {
+      const stats = await userService.getOverviewStats();
+      setOverviewStats(stats);
     } catch (err) {
-      console.error("Failed to load users:", err);
-      setError(err?.message || "Failed to load user list.");
+      console.error("Failed to load user overview stats:", err);
     } finally {
-      setIsLoading(false);
+      setIsLoadingStats(false);
+    }
+  }, []);
+
+  // Map sort keys for backend
+  const mapSortForApi = (sortKey) => {
+    switch (sortKey) {
+      case "oldest": return "OLDEST";
+      case "most_games": return "MOST_GAMES";
+      case "highest_win_rate": return "HIGHEST_WIN_RATE";
+      case "recent_activity": return "RECENT_ACTIVITY";
+      case "newest":
+      default:
+        return "NEWEST";
     }
   };
 
-  useEffect(() => {
-    loadUsers();
-  }, [roleFilter, statusFilter, debouncedSearch, currentPage]);
-
-  const handleConfirmStatusToggle = async () => {
-    if (!statusModalUser) return;
-
-    const newStatus = !statusModalUser.is_active;
-    setIsProcessingStatus(true);
-
+  // Load Users List
+  const loadUsersList = useCallback(async () => {
+    setIsLoadingList(true);
     try {
-      await userService.updateUserStatus(statusModalUser.id, newStatus);
-      toast.success(
-        `User '${statusModalUser.username}' has been ${
-          newStatus ? "unblocked" : "blocked"
-        } successfully.`
+      const data = await userService.listUsers({
+        search: search.trim() || undefined,
+        status: status === "ALL" ? undefined : status,
+        role: role === "ALL" ? undefined : role,
+        sortBy: mapSortForApi(sortBy),
+        page: currentPage,
+        pageSize: pageSize,
+      });
+
+      setUsers(data.items || []);
+      setTotalUsers(data.total || 0);
+      setTotalPages(data.pages || 1);
+      setLastRefreshedAt(new Date());
+    } catch (err) {
+      console.error("Failed to list users:", err);
+      toast.error(err?.message || "Failed to load user accounts.");
+    } finally {
+      setIsLoadingList(false);
+    }
+  }, [search, status, role, sortBy, currentPage, pageSize]);
+
+  // Initial load and filter change trigger
+  useEffect(() => {
+    loadOverviewStats();
+  }, [loadOverviewStats]);
+
+  useEffect(() => {
+    loadUsersList();
+  }, [loadUsersList]);
+
+  // Refresh both stats and user list
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([loadOverviewStats(), loadUsersList()]);
+      toast.success("User management data refreshed.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Filter handlers
+  const handleSearchChange = (val) => {
+    updateParams({ search: val, page: 1 });
+  };
+
+  const handleStatusChange = (val) => {
+    updateParams({ status: val, page: 1 });
+  };
+
+  const handleRoleChange = (val) => {
+    updateParams({ role: val, page: 1 });
+  };
+
+  const handleSortChange = (val) => {
+    updateParams({ sort: val, page: 1 });
+  };
+
+  const handleResetFilters = () => {
+    setSearchParams(new URLSearchParams(), { replace: true });
+  };
+
+  const handlePageChange = (newPage) => {
+    updateParams({ page: newPage });
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    updateParams({ pageSize: newSize, page: 1 });
+  };
+
+  const handleOpenStatusDialog = (user) => {
+    setDialogUser(user);
+  };
+
+  const handleConfirmStatusChange = async (targetUser, newActiveStatus) => {
+    if (!targetUser || isUpdatingStatus) return;
+
+    setIsUpdatingStatus(true);
+    try {
+      const targetIdentifier = targetUser.public_id || targetUser.id;
+      const updated = await userService.updateUserStatus(targetIdentifier, newActiveStatus);
+
+      // Update in local users array
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === targetUser.id || (targetUser.public_id && u.public_id === targetUser.public_id)
+            ? { ...u, is_active: updated.is_active }
+            : u
+        )
       );
-      setStatusModalUser(null);
-      await loadUsers();
+
+      // Refresh overview stats to reflect updated counts
+      loadOverviewStats();
+
+      toast.success(
+        `User '${targetUser.username}' has been ${newActiveStatus ? "unblocked" : "blocked"} successfully.`
+      );
+      setDialogUser(null);
     } catch (err) {
       toast.error(err?.message || "Failed to update user status.");
     } finally {
-      setIsProcessingStatus(false);
+      setIsUpdatingStatus(false);
     }
   };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "—";
-    try {
-      return new Date(dateStr).toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
+  const isFiltered = Boolean(search.trim()) || status !== "ALL" || role !== "ALL" || sortBy !== "newest";
+
+  const formatLastUpdated = (date) => {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   };
 
   return (
-    <div className="container-fluid py-4 px-md-4">
-      <AdminPageHeader
-        title="User Management"
-        subtitle="View all registered users, monitor gameplay activity, and manage access permissions."
-        breadcrumbItem="Users"
+    <div className="user-management-container">
+      {/* 1. Page Header */}
+      <div className="user-page-header">
+        <div className="user-header-left">
+          <div className="user-breadcrumb">
+            <Link to="/admin" className="user-breadcrumb-link">
+              Admin
+            </Link>
+            <span className="user-breadcrumb-separator">/</span>
+            <span className="user-breadcrumb-current">Users</span>
+          </div>
+          <h1 className="user-page-title">User Management</h1>
+          <p className="user-page-subtitle">
+            Administer player accounts, monitor gameplay statistics, and manage platform access controls.
+          </p>
+        </div>
+
+        <div className="user-header-actions">
+          <div className="user-last-updated">
+            Updated {formatLastUpdated(lastRefreshedAt)}
+          </div>
+          <button
+            type="button"
+            className="btn-user-refresh"
+            onClick={handleRefresh}
+            disabled={isRefreshing || isLoadingList}
+            title="Refresh user list and metrics"
+          >
+            <RefreshCw size={15} className={isRefreshing ? "spin-icon" : ""} />
+            <span>Refresh</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2. Overview Summary Cards */}
+      <UserStats stats={overviewStats} isLoading={isLoadingStats} />
+
+      {/* 3. Filter Toolbar */}
+      <UserFilters
+        searchQuery={search}
+        onSearchChange={handleSearchChange}
+        statusFilter={status}
+        onStatusChange={handleStatusChange}
+        roleFilter={role}
+        onRoleChange={handleRoleChange}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
+        onClearFilters={handleResetFilters}
+        totalMatching={totalUsers}
+        isLoading={isLoadingList}
       />
 
-      {/* Filter and Search Bar */}
-      <div className="card shadow-sm border-0 rounded-3 mb-4">
-        <div className="card-body p-3">
-          <div className="row g-3 align-items-center">
-            {/* Search Input */}
-            <div className="col-12 col-md-4">
-              <div className="input-group input-group-sm">
-                <span className="input-group-text bg-light text-muted">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Search by username..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary"
-                    onClick={() => setSearchQuery("")}
-                  >
-                    <i className="bi bi-x"></i>
-                  </button>
-                )}
-              </div>
-            </div>
+      {/* 4. Users Data Table */}
+      <UserTable
+        users={users}
+        currentAdminId={currentAdmin?.id}
+        isLoading={isLoadingList}
+        isFiltered={isFiltered}
+        onClearFilters={handleResetFilters}
+        onOpenStatusDialog={handleOpenStatusDialog}
+      />
 
-            {/* Status Filter */}
-            <div className="col-12 col-md-auto d-flex align-items-center gap-2">
-              <span className="small text-muted fw-semibold">Status:</span>
-              <div className="btn-group btn-group-sm" role="group">
-                <button
-                  type="button"
-                  className={`btn ${statusFilter === "ALL" ? "btn-primary" : "btn-outline-secondary"}`}
-                  onClick={() => {
-                    setStatusFilter("ALL");
-                    setCurrentPage(1);
-                  }}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${statusFilter === "ACTIVE" ? "btn-primary" : "btn-outline-secondary"}`}
-                  onClick={() => {
-                    setStatusFilter("ACTIVE");
-                    setCurrentPage(1);
-                  }}
-                >
-                  Active
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${statusFilter === "BLOCKED" ? "btn-primary" : "btn-outline-secondary"}`}
-                  onClick={() => {
-                    setStatusFilter("BLOCKED");
-                    setCurrentPage(1);
-                  }}
-                >
-                  Blocked
-                </button>
-              </div>
-            </div>
+      {/* 5. Pagination Footer */}
+      <UserPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalUsers}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        isLoading={isLoadingList}
+      />
 
-            {/* Role Filter */}
-            <div className="col-12 col-md-auto d-flex align-items-center gap-2">
-              <span className="small text-muted fw-semibold">Role:</span>
-              <div className="btn-group btn-group-sm" role="group">
-                <button
-                  type="button"
-                  className={`btn ${roleFilter === "ALL" ? "btn-primary" : "btn-outline-secondary"}`}
-                  onClick={() => {
-                    setRoleFilter("ALL");
-                    setCurrentPage(1);
-                  }}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${roleFilter === "PLAYER" ? "btn-primary" : "btn-outline-secondary"}`}
-                  onClick={() => {
-                    setRoleFilter("PLAYER");
-                    setCurrentPage(1);
-                  }}
-                >
-                  Player
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${roleFilter === "ADMIN" ? "btn-primary" : "btn-outline-secondary"}`}
-                  onClick={() => {
-                    setRoleFilter("ADMIN");
-                    setCurrentPage(1);
-                  }}
-                >
-                  Admin
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Error Alert */}
-      {error && (
-        <div className="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
-          <i className="bi bi-exclamation-triangle-fill"></i>
-          <div>{error}</div>
-        </div>
-      )}
-
-      {/* Users Table */}
-      <div className="card shadow-sm border-0 rounded-3 overflow-hidden">
-        {isLoading ? (
-          <div className="p-5">
-            <PageLoader text="Loading user accounts..." />
-          </div>
-        ) : userData.items.length === 0 ? (
-          <div className="text-center py-5 px-3">
-            <i className="bi bi-people fs-1 text-secondary opacity-50 d-block mb-3"></i>
-            <h5 className="fw-semibold text-secondary">No users found</h5>
-            <p className="text-muted small mb-0">
-              No registered user accounts match your active search or filter criteria.
-            </p>
-          </div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
-              <thead className="table-light text-secondary small text-uppercase">
-                <tr>
-                  <th scope="col" className="ps-4">User</th>
-                  <th scope="col">Role</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Games Played</th>
-                  <th scope="col">Won / Win Rate</th>
-                  <th scope="col">Joined Date</th>
-                  <th scope="col" className="text-end pe-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {userData.items.map((user) => {
-                  const isSelf = user.id === currentAdmin?.id;
-
-                  return (
-                    <tr key={user.id} className={!user.is_active ? "opacity-75 bg-light" : ""}>
-                      <td className="ps-4">
-                        <div className="d-flex align-items-center gap-2">
-                          <div
-                            className="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold small"
-                            style={{ width: "36px", height: "36px" }}
-                          >
-                            {user.username.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="fw-semibold text-dark">
-                              {user.username}
-                              {isSelf && <span className="badge bg-secondary ms-2 small">You</span>}
-                            </div>
-                            <div className="small text-muted font-monospace">ID #{user.id}</div>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td>
-                        <span
-                          className={`badge ${
-                            user.role === "ADMIN" ? "bg-dark" : "bg-primary"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
-                      </td>
-
-                      <td>
-                        {user.is_active ? (
-                          <span className="badge bg-success-subtle text-success border border-success-subtle">
-                            <i className="bi bi-check-circle-fill me-1"></i> Active
-                          </span>
-                        ) : (
-                          <span className="badge bg-danger-subtle text-danger border border-danger-subtle">
-                            <i className="bi bi-slash-circle-fill me-1"></i> Blocked
-                          </span>
-                        )}
-                      </td>
-
-                      <td>
-                        <span className="fw-semibold">{user.total_games}</span>
-                        <span className="text-muted small ms-1">games</span>
-                      </td>
-
-                      <td>
-                        <div>
-                          <span className="fw-semibold text-success">{user.games_won} won</span>
-                          <span className="text-muted small ms-2">({user.win_rate}%)</span>
-                        </div>
-                      </td>
-
-                      <td className="small text-muted">{formatDate(user.created_at)}</td>
-
-                      <td className="text-end pe-4">
-                        <div className="btn-group btn-group-sm">
-                          <Link
-                            to={`/admin/users/${user.id}`}
-                            className="btn btn-outline-primary d-inline-flex align-items-center gap-1"
-                            title="View user profile & game history"
-                          >
-                            <i className="bi bi-eye"></i>
-                            <span>Profile</span>
-                          </Link>
-
-                          {!isSelf && (
-                            <button
-                              type="button"
-                              className={`btn ${
-                                user.is_active ? "btn-outline-danger" : "btn-outline-success"
-                              }`}
-                              title={user.is_active ? "Block user access" : "Unblock user"}
-                              onClick={() => setStatusModalUser(user)}
-                            >
-                              <i
-                                className={`bi ${
-                                  user.is_active ? "bi-slash-circle" : "bi-check-circle"
-                                }`}
-                              ></i>
-                              <span className="ms-1">{user.is_active ? "Block" : "Unblock"}</span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination Footer */}
-        {!isLoading && userData.pages > 1 && (
-          <div className="card-footer bg-white border-top py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div className="small text-muted">
-              Showing page <strong>{userData.page}</strong> of <strong>{userData.pages}</strong> ({userData.total} users total)
-            </div>
-
-            <nav aria-label="Users pagination">
-              <ul className="pagination pagination-sm mb-0">
-                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                  <button
-                    type="button"
-                    className="page-link"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </button>
-                </li>
-
-                {Array.from({ length: userData.pages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === userData.pages || Math.abs(p - currentPage) <= 2)
-                  .map((pageNum, idx, arr) => {
-                    const prev = arr[idx - 1];
-                    const showEllipsis = prev && pageNum - prev > 1;
-
-                    return (
-                      <React.Fragment key={pageNum}>
-                        {showEllipsis && (
-                          <li className="page-item disabled">
-                            <span className="page-link">...</span>
-                          </li>
-                        )}
-                        <li className={`page-item ${currentPage === pageNum ? "active" : ""}`}>
-                          <button
-                            type="button"
-                            className="page-link"
-                            onClick={() => setCurrentPage(pageNum)}
-                          >
-                            {pageNum}
-                          </button>
-                        </li>
-                      </React.Fragment>
-                    );
-                  })}
-
-                <li className={`page-item ${currentPage === userData.pages ? "disabled" : ""}`}>
-                  <button
-                    type="button"
-                    className="page-link"
-                    onClick={() => setCurrentPage((p) => Math.min(userData.pages, p + 1))}
-                    disabled={currentPage === userData.pages}
-                  >
-                    Next
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        )}
-      </div>
-
-      {/* Block/Unblock Confirmation Modal */}
-      {statusModalUser && (
-        <div
-          className="modal show d-block"
-          tabIndex="-1"
-          role="dialog"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-        >
-          <div className="modal-dialog modal-dialog-centered" role="document">
-            <div className="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
-              <div
-                className={`modal-header ${
-                  statusModalUser.is_active ? "bg-danger" : "bg-success"
-                } text-white border-0 py-3`}
-              >
-                <h5 className="modal-title fw-semibold d-flex align-items-center gap-2">
-                  <i
-                    className={`bi ${
-                      statusModalUser.is_active ? "bi-slash-circle-fill" : "bi-check-circle-fill"
-                    }`}
-                  ></i>
-                  <span>
-                    {statusModalUser.is_active ? "Block User Access" : "Unblock User Access"}
-                  </span>
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close btn-close-white"
-                  aria-label="Close"
-                  onClick={() => setStatusModalUser(null)}
-                  disabled={isProcessingStatus}
-                ></button>
-              </div>
-
-              <div className="modal-body p-4">
-                <p className="mb-2">
-                  Are you sure you want to{" "}
-                  <strong>{statusModalUser.is_active ? "block" : "unblock"}</strong> user:
-                </p>
-                <div className="p-3 bg-light rounded-3 text-center my-3 border">
-                  <span className="fw-bold fs-5 text-dark">{statusModalUser.username}</span>
-                  <div className="small text-muted mt-1">ID #{statusModalUser.id} &bull; Role: {statusModalUser.role}</div>
-                </div>
-
-                {statusModalUser.is_active ? (
-                  <p className="small text-danger mb-0">
-                    <i className="bi bi-exclamation-triangle-fill me-1"></i>
-                    Blocking this user will immediately revoke their access. They will not be able to log in or play any games until unblocked.
-                  </p>
-                ) : (
-                  <p className="small text-success mb-0">
-                    <i className="bi bi-info-circle-fill me-1"></i>
-                    Unblocking this user will restore their ability to log in and play games normally.
-                  </p>
-                )}
-              </div>
-
-              <div className="modal-footer bg-light border-0 py-3 px-4">
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  onClick={() => setStatusModalUser(null)}
-                  disabled={isProcessingStatus}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${
-                    statusModalUser.is_active ? "btn-danger" : "btn-success"
-                  } fw-semibold px-4`}
-                  onClick={handleConfirmStatusToggle}
-                  disabled={isProcessingStatus}
-                >
-                  {isProcessingStatus ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      <span>Processing...</span>
-                    </>
-                  ) : (
-                    <span>{statusModalUser.is_active ? "Yes, Block User" : "Yes, Unblock User"}</span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 6. Block/Unblock Confirmation Dialog */}
+      <AccountActionDialog
+        isOpen={Boolean(dialogUser)}
+        user={dialogUser}
+        isProcessing={isUpdatingStatus}
+        onClose={() => setDialogUser(null)}
+        onConfirm={handleConfirmStatusChange}
+      />
     </div>
   );
 }

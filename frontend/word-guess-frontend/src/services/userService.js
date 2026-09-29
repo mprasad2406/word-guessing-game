@@ -7,16 +7,32 @@ import { apiClient } from "./apiClient";
 
 export const userService = {
   /**
-   * List paginated users with stats summary and filters.
+   * Retrieve high-level overview user metrics.
+   * @returns {Promise<{ total_users: number, active_users: number, blocked_users: number, active_7d_users: number }>}
+   */
+  async getOverviewStats() {
+    return apiClient.get("/api/v1/admin/users/stats/overview");
+  },
+
+  /**
+   * List paginated users with stats summary, filters, and sorting.
    * @param {Object} [options]
    * @param {string|null} [options.role] - "PLAYER" | "ADMIN"
    * @param {boolean|null} [options.isActive]
    * @param {string|null} [options.search]
+   * @param {string|null} [options.sortBy] - "newest" | "oldest" | "most_games" | "highest_win_rate" | "recent_activity"
    * @param {number} [options.page=1]
    * @param {number} [options.pageSize=20]
    * @returns {Promise<{ items: Array<any>, total: number, page: number, page_size: number, pages: number }>}
    */
-  async listUsers({ role = null, isActive = null, search = null, page = 1, pageSize = 20 } = {}) {
+  async listUsers({
+    role = null,
+    isActive = null,
+    search = null,
+    sortBy = "newest",
+    page = 1,
+    pageSize = 20,
+  } = {}) {
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("page_size", String(pageSize));
@@ -33,40 +49,44 @@ export const userService = {
       params.set("search", search.trim());
     }
 
+    if (sortBy) {
+      params.set("sort_by", sortBy);
+    }
+
     return apiClient.get(`/api/v1/admin/users?${params.toString()}`);
   },
 
   /**
-   * Retrieve detailed user profile, stats, and gameplay metrics.
-   * @param {number|string} userId
+   * Retrieve detailed user profile, stats, and gameplay metrics by identifier (public_id or ID).
+   * @param {number|string} userIdentifier
    * @returns {Promise<any>}
    */
-  async getUserDetails(userId) {
-    return apiClient.get(`/api/v1/admin/users/${userId}`);
+  async getUserDetails(userIdentifier) {
+    return apiClient.get(`/api/v1/admin/users/${userIdentifier}`);
   },
 
   /**
    * Block or unblock a user account.
-   * @param {number|string} userId
+   * @param {number|string} userIdentifier
    * @param {boolean} isActive
    * @returns {Promise<any>}
    */
-  async updateUserStatus(userId, isActive) {
-    return apiClient.patch(`/api/v1/admin/users/${userId}/status`, {
+  async updateUserStatus(userIdentifier, isActive) {
+    return apiClient.patch(`/api/v1/admin/users/${userIdentifier}/status`, {
       is_active: isActive,
     });
   },
 
   /**
    * Retrieve paginated match history for a specific user.
-   * @param {number|string} userId
+   * @param {number|string} userIdentifier
    * @param {Object} [options]
    * @param {string|null} [options.status]
    * @param {number} [options.page=1]
    * @param {number} [options.pageSize=20]
    * @returns {Promise<{ items: Array<any>, total: number, page: number, page_size: number, pages: number }>}
    */
-  async getUserGameHistory(userId, { status = null, page = 1, pageSize = 20 } = {}) {
+  async getUserGameHistory(userIdentifier, { status = null, page = 1, pageSize = 20 } = {}) {
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("page_size", String(pageSize));
@@ -75,6 +95,6 @@ export const userService = {
       params.set("status", status);
     }
 
-    return apiClient.get(`/api/v1/admin/users/${userId}/games?${params.toString()}`);
+    return apiClient.get(`/api/v1/admin/users/${userIdentifier}/games?${params.toString()}`);
   },
 };

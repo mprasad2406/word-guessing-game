@@ -10,19 +10,24 @@ class UserStatsResponse(BaseModel):
     """Detailed user statistics and profile for administrators."""
 
     id: int
+    public_id: str
     username: str
     role: UserRole
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    total_games: int
-    games_won: int
-    games_lost: int
-    games_expired: int
-    active_games: int
-    win_rate: float
-    hints_used_total: int
-    attempts_used_total: int
+    last_active_at: Optional[datetime] = None
+    total_games: int = 0
+    games_won: int = 0
+    games_lost: int = 0
+    games_expired: int = 0
+    active_games: int = 0
+    win_rate: float = 0.0
+    hints_used_total: int = 0
+    attempts_used_total: int = 0
+    average_attempts: float = 0.0
+    average_duration_seconds: Optional[float] = None
+    current_streak: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -35,6 +40,15 @@ class UserListResponse(BaseModel):
     page: int
     page_size: int
     pages: int
+
+
+class UserOverviewStatsResponse(BaseModel):
+    """High-level summary statistics across all registered users."""
+
+    total_users: int
+    active_users: int
+    blocked_users: int
+    active_7d_users: int
 
 
 class UserStatusUpdateRequest(BaseModel):
