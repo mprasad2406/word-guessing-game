@@ -61,12 +61,15 @@ class WordResponse(BaseModel):
 
     id: int
     word: str
-    hint: Optional[str]
+    hint: Optional[str] = None
     difficulty: DifficultyLevel
     is_active: bool
     created_by: int
     created_at: datetime
     updated_at: datetime
+    appearance_count: Optional[int] = 0
+    solve_rate: Optional[float] = None
+    average_attempts: Optional[float] = None
 
     model_config = ConfigDict(from_attributes=True)
 

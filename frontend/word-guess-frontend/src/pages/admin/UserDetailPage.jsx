@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowLeft, AlertCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -15,6 +15,12 @@ export function UserDetailPage() {
   const identifier = publicId || userId;
   const { user: currentAdmin } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read URL query params for state preservation
+  const urlStatus = searchParams.get("status") || "ALL";
+  const urlPage = parseInt(searchParams.get("page") || "1", 10);
+  const urlSearch = searchParams.get("search") || "";
 
   const [userDetails, setUserDetails] = useState(null);
   const [gameHistory, setGameHistory] = useState({
@@ -25,8 +31,10 @@ export function UserDetailPage() {
     pages: 1,
   });
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [currentPage, setCurrentPage] = useState(isNaN(urlPage) ? 1 : urlPage);
+  const [statusFilter, setStatusFilter] = useState(urlStatus);
+  const [searchTerm, setSearchTerm] = useState(urlSearch);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -35,6 +43,24 @@ export function UserDetailPage() {
   const [dialogUser, setDialogUser] = useState(null);
   const [dialogAction, setDialogAction] = useState("block"); // "block" | "unblock"
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  // Update URL Search Params when filters/pagination/search change
+  const updateUrlParams = useCallback(
+    (newFilter, newPage, newSearch) => {
+      const params = new URLSearchParams();
+      if (newFilter && newFilter !== "ALL") {
+        params.set("status", newFilter);
+      }
+      if (newPage && newPage > 1) {
+        params.set("page", String(newPage));
+      }
+      if (newSearch && newSearch.trim()) {
+        params.set("search", newSearch.trim());
+      }
+      setSearchParams(params, { replace: true });
+    },
+    [setSearchParams]
+  );
 
   // Load user profile & overview
   const loadUserDetails = useCallback(async () => {
@@ -79,6 +105,22 @@ export function UserDetailPage() {
       loadUserHistory();
     }
   }, [loadUserHistory]);
+
+  const handleStatusFilterChange = (filterId) => {
+    setStatusFilter(filterId);
+    setCurrentPage(1);
+    updateUrlParams(filterId, 1, searchTerm);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    updateUrlParams(statusFilter, page, searchTerm);
+  };
+
+  const handleSearchChange = (term) => {
+    setSearchTerm(term);
+    updateUrlParams(statusFilter, currentPage, term);
+  };
 
   const handleOpenStatusDialog = () => {
     if (!userDetails) return;
@@ -154,19 +196,20 @@ export function UserDetailPage() {
         isUpdatingStatus={isUpdatingStatus}
       />
 
-      {/* Gameplay Metrics Breakdown */}
+      {/* Gameplay Metrics Breakdown (4 Scannable Cards) */}
       <UserGameStats user={userDetails} />
 
-      {/* Match History Table */}
+      {/* Match History Table with Segmented Controls & Search */}
       <UserGameHistory
+        userId={identifier}
+        userStats={userDetails}
         gameHistory={gameHistory}
         statusFilter={statusFilter}
-        onStatusFilterChange={(f) => {
-          setStatusFilter(f);
-          setCurrentPage(1);
-        }}
+        onStatusFilterChange={handleStatusFilterChange}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
         currentPage={currentPage}
-        onPageChange={(p) => setCurrentPage(p)}
+        onPageChange={handlePageChange}
         isLoading={isHistoryLoading}
       />
 

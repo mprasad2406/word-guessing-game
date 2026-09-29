@@ -1,49 +1,85 @@
 import React from "react";
+import { BookOpen, CheckCircle2, PauseCircle } from "lucide-react";
 
 /**
- * WordSummaryStrip:
- * Compact horizontal summary strip placed immediately below the page header.
- * Displays: Total Words: X · Available: Y · Inactive: Z
- * Uses green for available count and muted grey for inactive count without large icons.
+ * WordSummaryStrip (DictionaryStats):
+ * 3 compact, interactive summary metric indicators:
+ * - Total Words: BookOpen icon and count (click to reset status filter)
+ * - Available: Green CheckCircle2 icon and count (click to filter ACTIVE)
+ * - Inactive: Gray PauseCircle icon and count (click to filter INACTIVE)
  */
-export function WordSummaryStrip({ summary, isLoading = false }) {
+export function WordSummaryStrip({
+  summary,
+  isLoading = false,
+  statusFilter = "ALL",
+  onStatusFilterChange,
+}) {
   const total = summary?.total ?? 0;
   const active = summary?.active ?? 0;
   const inactive = summary?.inactive ?? Math.max(0, total - active);
 
+  const isTotalActive = statusFilter === "ALL";
+  const isAvailableActive = statusFilter === "ACTIVE";
+  const isInactiveActive = statusFilter === "INACTIVE";
+
   return (
-    <div className="word-summary-strip-compact" role="region" aria-label="Dictionary Summary Counts">
-      <div className="summary-strip-items">
-        {/* Total Words */}
-        <div className="summary-item">
-          <span className="summary-item-label">Total Words:</span>
-          <span className="summary-item-value num-tabular">
+    <div className="word-summary-interactive-grid" role="region" aria-label="Dictionary Quick Filters & Counts">
+      {/* 1. Total Words */}
+      <button
+        type="button"
+        className={`word-summary-card ${isTotalActive ? "is-selected" : ""}`}
+        onClick={() => onStatusFilterChange && onStatusFilterChange("ALL")}
+        aria-pressed={isTotalActive}
+        title="View all dictionary words"
+      >
+        <div className="word-summary-icon-box icon-indigo" aria-hidden="true">
+          <BookOpen size={18} strokeWidth={2.2} />
+        </div>
+        <div className="word-summary-info">
+          <span className="word-summary-label">Total Words</span>
+          <div className="word-summary-value num-tabular">
             {isLoading ? <span className="skeleton-inline" /> : total}
-          </span>
+          </div>
         </div>
+      </button>
 
-        <span className="summary-item-separator" aria-hidden="true">·</span>
-
-        {/* Available Words */}
-        <div className="summary-item item-available">
-          <span className="summary-status-dot dot-available" aria-hidden="true" />
-          <span className="summary-item-label">Available:</span>
-          <span className="summary-item-value value-available num-tabular">
+      {/* 2. Available Words */}
+      <button
+        type="button"
+        className={`word-summary-card ${isAvailableActive ? "is-selected is-success" : ""}`}
+        onClick={() => onStatusFilterChange && onStatusFilterChange(isAvailableActive ? "ALL" : "ACTIVE")}
+        aria-pressed={isAvailableActive}
+        title="Filter by available words (active in gameplay)"
+      >
+        <div className="word-summary-icon-box icon-green" aria-hidden="true">
+          <CheckCircle2 size={18} strokeWidth={2.2} />
+        </div>
+        <div className="word-summary-info">
+          <span className="word-summary-label">Available</span>
+          <div className="word-summary-value text-success num-tabular">
             {isLoading ? <span className="skeleton-inline" /> : active}
-          </span>
+          </div>
         </div>
+      </button>
 
-        <span className="summary-item-separator" aria-hidden="true">·</span>
-
-        {/* Inactive Words */}
-        <div className="summary-item item-inactive">
-          <span className="summary-status-dot dot-inactive" aria-hidden="true" />
-          <span className="summary-item-label">Inactive:</span>
-          <span className="summary-item-value value-inactive num-tabular">
+      {/* 3. Inactive Words */}
+      <button
+        type="button"
+        className={`word-summary-card ${isInactiveActive ? "is-selected is-muted" : ""}`}
+        onClick={() => onStatusFilterChange && onStatusFilterChange(isInactiveActive ? "ALL" : "INACTIVE")}
+        aria-pressed={isInactiveActive}
+        title="Filter by inactive words (disabled from gameplay)"
+      >
+        <div className="word-summary-icon-box icon-gray" aria-hidden="true">
+          <PauseCircle size={18} strokeWidth={2.2} />
+        </div>
+        <div className="word-summary-info">
+          <span className="word-summary-label">Inactive</span>
+          <div className="word-summary-value text-secondary num-tabular">
             {isLoading ? <span className="skeleton-inline" /> : inactive}
-          </span>
+          </div>
         </div>
-      </div>
+      </button>
     </div>
   );
 }

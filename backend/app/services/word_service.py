@@ -86,8 +86,17 @@ class WordService:
         )
         pages = (total + page_size - 1) // page_size if total > 0 else 1
 
+        item_responses = []
+        for item in items:
+            resp = WordResponse.model_validate(item)
+            stats = await self.word_repo.get_word_usage_stats(item.id)
+            resp.appearance_count = stats.get("appearance_count", 0)
+            resp.solve_rate = stats.get("solve_rate")
+            resp.average_attempts = stats.get("average_attempts")
+            item_responses.append(resp)
+
         return WordListResponse(
-            items=[WordResponse.model_validate(item) for item in items],
+            items=item_responses,
             total=total,
             page=page,
             page_size=page_size,
@@ -95,11 +104,17 @@ class WordService:
         )
 
     async def get_word(self, word_id: int) -> WordResponse:
-        """Retrieve a single word by ID."""
+        """Retrieve a single word by ID with gameplay usage statistics."""
         word = await self.word_repo.get_by_id(word_id)
         if not word:
             raise WordNotFoundException(f"Word with ID {word_id} not found")
-        return WordResponse.model_validate(word)
+        
+        stats = await self.word_repo.get_word_usage_stats(word_id)
+        resp = WordResponse.model_validate(word)
+        resp.appearance_count = stats.get("appearance_count", 0)
+        resp.solve_rate = stats.get("solve_rate")
+        resp.average_attempts = stats.get("average_attempts")
+        return resp
 
     async def update_word(
         self,

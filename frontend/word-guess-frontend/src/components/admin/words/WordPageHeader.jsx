@@ -17,13 +17,11 @@ export function WordPageHeader({ onAddWordClick }) {
           </Link>
           <ChevronRight size={12} className="word-breadcrumb-separator" aria-hidden="true" />
           <span className="word-breadcrumb-current" aria-current="page">
-            Word Management
+            Words
           </span>
         </nav>
         <h1 className="word-page-title">Word Management</h1>
-        <p className="word-page-subtitle">
-          Manage your game dictionary, clues, difficulty levels and word availability.
-        </p>
+        <p className="word-page-subtitle">Manage your game dictionary.</p>
       </div>
 
       <div className="word-header-right">

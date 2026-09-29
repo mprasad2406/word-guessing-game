@@ -17,7 +17,7 @@ export function SettingsPage() {
   const [initialSettings, setInitialSettings] = useState(null);
   const [formData, setFormData] = useState({
     game_enabled: true,
-    max_attempts: 6,
+    max_attempts: 5,
     min_word_length: 4,
     max_word_length: 8,
     default_difficulty: "MEDIUM",

@@ -15,6 +15,7 @@ export const adminPaths = {
   reports: () => "/admin/reports",
   users: () => "/admin/users",
   userDetail: (userId) => `/admin/users/${userId}`,
+  userMatchDetail: (userId, matchId) => `/admin/users/${userId}/matches/${matchId}`,
   words: () => "/admin/words",
   settings: () => "/admin/settings",
 };

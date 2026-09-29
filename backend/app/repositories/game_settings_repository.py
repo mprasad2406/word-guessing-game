@@ -26,7 +26,7 @@ class GameSettingsRepository:
         if settings is None:
             settings = GameSettings(
                 id=1,
-                max_attempts=6,
+                max_attempts=5,
                 min_word_length=4,
                 max_word_length=8,
                 default_difficulty=DifficultyLevel.MEDIUM,

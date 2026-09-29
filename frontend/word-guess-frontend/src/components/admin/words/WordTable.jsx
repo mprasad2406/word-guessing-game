@@ -1,24 +1,24 @@
 import React from "react";
-import { BookOpen, SearchX, Plus, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { BookOpen, SearchX, Plus, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown, Pause } from "lucide-react";
 import { WordTableRow } from "./WordTableRow";
-import { WordAvailabilityIndicator } from "./WordAvailabilityIndicator";
-import { WordDifficultyBadge } from "./WordDifficultyBadge";
+import { DifficultyMeter } from "./DifficultyMeter";
 import { WordActionMenu } from "./WordActionMenu";
 
 /**
  * WordTable:
  * 4-column dictionary management table with interactive column sorting,
- * legend, responsive cards, skeleton loading rows, and empty state fallbacks.
+ * responsive mobile cards, skeleton loading rows, and empty state fallbacks.
  */
 export function WordTable({
   words = [],
   isLoading = false,
   isFiltered = false,
-  sortField = "id",
-  sortDirection = "desc",
+  sortField = "word",
+  sortDirection = "asc",
   onSort,
   onClearFilters,
   onAddWord,
+  onOpenDrawer,
   onEditWord,
   onToggleActive,
   onDeleteWord,
@@ -41,19 +41,6 @@ export function WordTable({
 
   return (
     <div className="word-table-card">
-      {/* Table Legend Header */}
-      <div className="word-table-legend-bar">
-        <span className="legend-label">Legend:</span>
-        <div className="legend-item">
-          <span className="legend-dot dot-available" aria-hidden="true" />
-          <span>Available for gameplay</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-dot dot-inactive" aria-hidden="true" />
-          <span>Inactive</span>
-        </div>
-      </div>
-
       {/* Desktop & Tablet Table View */}
       <div className="table-responsive-wrapper">
         <table className="admin-word-table">
@@ -93,7 +80,7 @@ export function WordTable({
                   onClick={() => onSort && onSort("hint")}
                   aria-label="Sort by Clue"
                 >
-                  <span>Clue / Hint</span>
+                  <span>Clue</span>
                   {renderSortIcon("hint")}
                 </button>
               </th>
@@ -108,16 +95,16 @@ export function WordTable({
               Array.from({ length: 6 }).map((_, idx) => (
                 <tr key={idx} className="skeleton-row" aria-hidden="true">
                   <td>
-                    <span className="skeleton-box" style={{ width: "100px", height: "26px", borderRadius: "6px" }} />
+                    <span className="skeleton-box" style={{ width: "90px", height: "20px", borderRadius: "4px" }} />
                   </td>
                   <td>
-                    <span className="skeleton-box" style={{ width: "70px", height: "22px", borderRadius: "9999px" }} />
+                    <span className="skeleton-box" style={{ width: "70px", height: "16px", borderRadius: "4px" }} />
                   </td>
                   <td>
-                    <span className="skeleton-box" style={{ width: "220px", height: "16px" }} />
+                    <span className="skeleton-box" style={{ width: "240px", height: "16px", borderRadius: "4px" }} />
                   </td>
                   <td className="text-end">
-                    <span className="skeleton-box" style={{ width: "32px", height: "32px", borderRadius: "6px", marginLeft: "auto" }} />
+                    <span className="skeleton-box" style={{ width: "28px", height: "28px", borderRadius: "6px", marginLeft: "auto" }} />
                   </td>
                 </tr>
               ))
@@ -128,7 +115,7 @@ export function WordTable({
                   {isFiltered ? (
                     <div className="empty-state-content">
                       <div className="empty-icon-circle">
-                        <SearchX size={26} className="text-secondary opacity-75" />
+                        <SearchX size={24} className="text-secondary opacity-75" />
                       </div>
                       <h3 className="empty-state-heading">No matching words found</h3>
                       <p className="empty-state-subtext">
@@ -141,7 +128,7 @@ export function WordTable({
                           onClick={onClearFilters}
                           aria-label="Clear active filters"
                         >
-                          <RotateCcw size={14} />
+                          <RotateCcw size={13} />
                           <span>Clear Filters</span>
                         </button>
                       )}
@@ -149,7 +136,7 @@ export function WordTable({
                   ) : (
                     <div className="empty-state-content">
                       <div className="empty-icon-circle icon-indigo-bg">
-                        <BookOpen size={26} className="text-primary" />
+                        <BookOpen size={24} className="text-primary" />
                       </div>
                       <h3 className="empty-state-heading">No words in dictionary</h3>
                       <p className="empty-state-subtext">
@@ -176,6 +163,7 @@ export function WordTable({
                 <WordTableRow
                   key={word.id}
                   word={word}
+                  onOpenDrawer={onOpenDrawer}
                   onEdit={onEditWord}
                   onToggleActive={onToggleActive}
                   onDelete={onDeleteWord}
@@ -186,16 +174,16 @@ export function WordTable({
         </table>
       </div>
 
-      {/* Mobile Card List View (Visible on small screens) */}
+      {/* Mobile Card List View (Visible only on small screens) */}
       <div className="word-mobile-cards-list">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, idx) => (
             <div key={idx} className="word-mobile-card skeleton-row">
               <div className="mobile-card-top">
-                <span className="skeleton-box" style={{ width: "90px", height: "24px" }} />
-                <span className="skeleton-box" style={{ width: "60px", height: "20px" }} />
+                <span className="skeleton-box" style={{ width: "90px", height: "20px" }} />
+                <span className="skeleton-box" style={{ width: "60px", height: "18px" }} />
               </div>
-              <span className="skeleton-box" style={{ width: "100%", height: "16px" }} />
+              <span className="skeleton-box" style={{ width: "100%", height: "14px" }} />
             </div>
           ))
         ) : words.length === 0 ? (
@@ -203,29 +191,52 @@ export function WordTable({
             <p className="empty-state-subtext mb-0">No words found.</p>
           </div>
         ) : (
-          words.map((word) => (
-            <div
-              key={word.id}
-              className={`word-mobile-card ${!word.is_active ? "card-inactive" : ""}`}
-            >
-              <div className="mobile-card-top">
-                <WordAvailabilityIndicator word={word.word} isActive={Boolean(word.is_active)} />
-                <div className="d-flex align-items-center gap-2">
-                  <WordDifficultyBadge difficulty={word.difficulty} />
-                  <WordActionMenu
-                    word={word}
-                    onEdit={onEditWord}
-                    onToggleActive={onToggleActive}
-                    onDelete={onDeleteWord}
-                  />
+          words.map((word) => {
+            const isActive = Boolean(word.is_active);
+            const wordText = (word.word || "").toUpperCase();
+
+            return (
+              <div
+                key={word.id}
+                className={`word-mobile-card ${!isActive ? "card-inactive" : ""}`}
+              >
+                <div className="mobile-card-top">
+                  <button
+                    type="button"
+                    className="mobile-word-title-btn"
+                    onClick={() => onOpenDrawer && onOpenDrawer(word)}
+                  >
+                    <span className={`word-status-indicator-dot ${isActive ? "dot-active" : "dot-inactive"}`}>
+                      {isActive ? <span className="dot-active-core" /> : <Pause size={9} strokeWidth={3} />}
+                    </span>
+                    <span className={`word-text-label ${isActive ? "text-active" : "text-inactive"}`}>
+                      {wordText}
+                    </span>
+                  </button>
+
+                  <div className="mobile-card-right-group">
+                    <DifficultyMeter difficulty={word.difficulty} showLabel={false} />
+                    <WordActionMenu
+                      word={word}
+                      onEdit={onEditWord}
+                      onViewDetails={() => onOpenDrawer && onOpenDrawer(word)}
+                      onToggleActive={onToggleActive}
+                      onDelete={onDeleteWord}
+                    />
+                  </div>
+                </div>
+
+                <div
+                  className="mobile-card-clue"
+                  onClick={() => onOpenDrawer && onOpenDrawer(word)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <span className="mobile-clue-text">{word.hint || "No definition set"}</span>
                 </div>
               </div>
-              <div className="mobile-card-clue">
-                <span className="mobile-clue-label">Clue:</span>
-                <span className="mobile-clue-text">{word.hint || "No definition set"}</span>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

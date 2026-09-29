@@ -1,5 +1,6 @@
 """Service for Admin User Management, Profile Insights, and Access Control."""
 
+from datetime import datetime, timezone
 from typing import List, Optional
 from app.core.exceptions import AppException
 from app.models.game_session import GameStatus
@@ -11,8 +12,18 @@ from app.schemas.admin_user import (
     UserOverviewStatsResponse,
     UserStatsResponse,
 )
-from app.schemas.gameplay import GameHistoryItem, GameHistoryResponse
+from app.schemas.gameplay import GameHistoryItem, GameHistoryResponse, GameStateResponse, GuessItem
 from app.services.audit_service import AuditService
+from app.services.gameplay_service import compute_letter_feedback
+
+
+def _ensure_utc(dt: Optional[datetime]) -> Optional[datetime]:
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
 
 
 class AdminUserService:
@@ -99,7 +110,7 @@ class AdminUserService:
         """Get comprehensive profile and metrics for a user by ID, public_id, or username."""
         user = await self.user_repo.get_by_identifier(identifier)
         if not user:
-            raise AppException("User not found", "USER_NOT_FOUND", 404)
+            raise AppException(status_code=404, message="User not found", error_code="USER_NOT_FOUND")
 
         stats = await self.user_repo.get_user_game_stats(user.id)
         return UserStatsResponse(
@@ -123,11 +134,11 @@ class AdminUserService:
         """Block or unblock a user account and record an audit log entry."""
         user = await self.user_repo.get_by_identifier(identifier)
         if not user:
-            raise AppException("User not found", "USER_NOT_FOUND", 404)
+            raise AppException(status_code=404, message="User not found", error_code="USER_NOT_FOUND")
 
         # Prevent admin from blocking themselves
         if user.id == admin_user_id and not is_active:
-            raise AppException("Administrators cannot block their own account", "CANNOT_BLOCK_SELF", 400)
+            raise AppException(status_code=400, message="Administrators cannot block their own account", error_code="CANNOT_BLOCK_SELF")
 
         updated_user = await self.user_repo.update_status(user.id, is_active)
 
@@ -163,7 +174,7 @@ class AdminUserService:
         """Retrieve paginated match history for a given user for admin inspection."""
         user = await self.user_repo.get_by_identifier(identifier)
         if not user:
-            raise AppException("User not found", "USER_NOT_FOUND", 404)
+            raise AppException(status_code=404, message="User not found", error_code="USER_NOT_FOUND")
 
         sessions, total = await self.game_session_repo.list_player_sessions(
             player_id=user.id,
@@ -196,3 +207,74 @@ class AdminUserService:
             page_size=page_size,
             pages=pages,
         )
+
+    async def get_user_match_details(
+        self,
+        identifier: str,
+        match_identifier: str,
+    ) -> GameStateResponse:
+        """
+        Retrieve comprehensive match details and guess history for a user's game session
+        for administrator inspection.
+        """
+        user = await self.user_repo.get_by_identifier(identifier)
+        if not user:
+            raise AppException(status_code=404, message="User not found", error_code="USER_NOT_FOUND")
+
+        session = await self.game_session_repo.get_session_by_identifier(match_identifier)
+        if not session or session.player_id != user.id:
+            raise AppException(status_code=404, message="Match session not found for this user", error_code="MATCH_NOT_FOUND")
+
+        word_text = session.word.word if session.word else ""
+        word_length = len(word_text)
+        final_word = word_text
+
+        max_hints = session.settings_snapshot.get("max_hints", 0) if session.settings_snapshot else 0
+        hints_remaining = max(0, max_hints - session.hints_used)
+        revealed_hint = session.word.hint if session.word else None
+
+        started_at = _ensure_utc(session.started_at)
+        completed_at = _ensure_utc(session.completed_at)
+
+        time_limit = session.settings_snapshot.get("time_limit_seconds") if session.settings_snapshot else None
+        time_remaining = None
+        if time_limit and time_limit > 0:
+            now = datetime.now(timezone.utc)
+            if session.status == GameStatus.ACTIVE:
+                elapsed = (now - started_at).total_seconds() if started_at else 0
+                time_remaining = max(0, int(time_limit - elapsed))
+            else:
+                time_remaining = 0
+
+        guess_items = [
+            GuessItem(
+                guess=g.guess,
+                is_correct=g.is_correct,
+                attempt_number=g.attempt_number,
+                created_at=_ensure_utc(g.created_at),
+                letter_feedback=compute_letter_feedback(word_text, g.guess),
+            )
+            for g in (session.guesses or [])
+        ]
+
+        return GameStateResponse(
+            id=session.id,
+            public_id=session.public_id,
+            status=session.status,
+            word_length=word_length,
+            masked_pattern=" ".join(list(word_text)) if word_text else "",
+            max_attempts=session.max_attempts,
+            attempts_used=session.attempts_used,
+            remaining_attempts=max(0, session.max_attempts - session.attempts_used),
+            max_hints=max_hints,
+            hints_used=session.hints_used,
+            hints_remaining=hints_remaining,
+            revealed_hint=revealed_hint,
+            guesses=guess_items,
+            started_at=started_at,
+            completed_at=completed_at,
+            final_word=final_word,
+            time_limit_seconds=time_limit,
+            time_remaining_seconds=time_remaining,
+        )
+

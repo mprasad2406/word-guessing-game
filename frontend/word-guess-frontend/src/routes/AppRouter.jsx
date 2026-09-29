@@ -7,6 +7,7 @@ import { AdminHomePage } from "../pages/admin/AdminHomePage";
 import { AdminReportsPage } from "../pages/admin/AdminReportsPage";
 import { SettingsPage } from "../pages/admin/SettingsPage";
 import { UserDetailPage } from "../pages/admin/UserDetailPage";
+import { AdminMatchDetailPage } from "../pages/admin/AdminMatchDetailPage";
 import { UserManagementPage } from "../pages/admin/UserManagementPage";
 import { WordManagementPage } from "../pages/admin/WordManagementPage";
 import { LoginPage } from "../pages/auth/LoginPage";
@@ -56,6 +57,7 @@ export function AppRouter() {
           <Route path="/admin/reports" element={<AdminReportsPage />} />
           <Route path="/admin/users" element={<UserManagementPage />} />
           <Route path="/admin/users/:userId" element={<UserDetailPage />} />
+          <Route path="/admin/users/:userId/matches/:matchId" element={<AdminMatchDetailPage />} />
           <Route path="/admin/words" element={<WordManagementPage />} />
           <Route path="/admin/settings" element={<SettingsPage />} />
         </Route>

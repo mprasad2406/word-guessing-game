@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, Pencil, Pause, Play, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, FileText, Pause, Play, Trash2 } from "lucide-react";
 
 /**
  * WordActionMenu:
  * Accessible 3-dot action dropdown menu for each table row.
- * Features 44×44px touch target, upward opening near viewport bottom,
- * keyboard accessibility (Esc/Enter/Focus), and outside-click dismissal.
+ * Includes: Edit Word, View Details, Activate / Deactivate, Delete Word.
  */
 export function WordActionMenu({
   word,
   onEdit,
+  onViewDetails,
   onToggleActive,
   onDelete,
 }) {
@@ -25,8 +25,7 @@ export function WordActionMenu({
     if (!isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      // If less than 160px below button, open upwards
-      setOpenUpward(spaceBelow < 160);
+      setOpenUpward(spaceBelow < 180);
     }
     setIsOpen((prev) => !prev);
   };
@@ -67,7 +66,7 @@ export function WordActionMenu({
 
   const handleAction = (callback) => {
     setIsOpen(false);
-    callback(word);
+    if (callback) callback(word);
   };
 
   return (
@@ -91,7 +90,20 @@ export function WordActionMenu({
           role="menu"
           aria-orientation="vertical"
         >
-          {/* 1. Edit */}
+          {/* 1. View Details */}
+          {onViewDetails && (
+            <button
+              type="button"
+              className="action-dropdown-item item-view"
+              role="menuitem"
+              onClick={() => handleAction(onViewDetails)}
+            >
+              <FileText size={14} className="item-icon icon-primary" />
+              <span>View Details</span>
+            </button>
+          )}
+
+          {/* 2. Edit Word */}
           <button
             type="button"
             className="action-dropdown-item item-edit"
@@ -102,7 +114,7 @@ export function WordActionMenu({
             <span>Edit Word</span>
           </button>
 
-          {/* 2. Activate / Deactivate */}
+          {/* 3. Activate / Deactivate */}
           <button
             type="button"
             className={`action-dropdown-item ${isActive ? "item-deactivate" : "item-activate"}`}
@@ -124,7 +136,7 @@ export function WordActionMenu({
 
           <div className="dropdown-divider" role="separator" />
 
-          {/* 3. Delete */}
+          {/* 4. Delete Word */}
           <button
             type="button"
             className="action-dropdown-item item-delete"

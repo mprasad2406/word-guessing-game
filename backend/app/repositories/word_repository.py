@@ -1,10 +1,10 @@
 """Repository for Word database operations."""
 
-from typing import List, Optional, Tuple
-from sqlalchemy import func, select
+from typing import Any, Dict, List, Optional, Tuple
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.game_session import GameSession
+from app.models.game_session import GameSession, GameStatus
 from app.models.word import DifficultyLevel, Word
 
 
@@ -104,6 +104,28 @@ class WordRepository:
         await self.session.flush()
         await self.session.refresh(word_entity)
         return word_entity
+
+    async def get_word_usage_stats(self, word_id: int) -> Dict[str, Any]:
+        """Calculate gameplay usage metrics for a word."""
+        statement = select(
+            func.count(GameSession.id).label("appearances"),
+            func.coalesce(func.sum(case((GameSession.status == GameStatus.WON, 1), else_=0)), 0).label("won_count"),
+            func.avg(GameSession.attempts_used).label("avg_attempts"),
+        ).where(GameSession.word_id == word_id)
+        result = await self.session.execute(statement)
+        row = result.first()
+        if not row or not row.appearances:
+            return {"appearance_count": 0, "solve_rate": None, "average_attempts": None}
+
+        appearances = row.appearances or 0
+        won_count = row.won_count or 0
+        solve_rate = round((won_count / appearances) * 100, 1) if appearances > 0 else None
+        avg_attempts = round(float(row.avg_attempts), 1) if row.avg_attempts else None
+        return {
+            "appearance_count": appearances,
+            "solve_rate": solve_rate,
+            "average_attempts": avg_attempts,
+        }
 
     async def count_game_sessions_referencing_word(self, word_id: int) -> int:
         """Count the number of game sessions currently referencing this word."""

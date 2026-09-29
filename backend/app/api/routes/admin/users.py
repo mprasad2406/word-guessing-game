@@ -14,7 +14,7 @@ from app.schemas.admin_user import (
     UserStatusUpdateRequest,
 )
 from app.schemas.common import ApiResponse
-from app.schemas.gameplay import GameHistoryResponse
+from app.schemas.gameplay import GameHistoryResponse, GameStateResponse
 from app.services.admin_user_service import AdminUserService
 
 router = APIRouter(prefix="/users", tags=["Admin - Users"])
@@ -146,3 +146,28 @@ async def get_user_games(
         data=history,
         message="User game history retrieved successfully",
     )
+
+
+@router.get(
+    "/{user_identifier}/matches/{match_identifier}",
+    response_model=ApiResponse[GameStateResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Get user match details for admin inspection",
+    description="Admin-only endpoint to retrieve comprehensive match history, attempts, letter feedback, and guesses for a player.",
+)
+async def get_user_match_details(
+    user_identifier: str,
+    match_identifier: str,
+    current_admin: User = Depends(require_admin),
+    user_service: AdminUserService = Depends(get_admin_user_service),
+) -> ApiResponse[GameStateResponse]:
+    """Retrieve full match details for administrator inspection."""
+    match_data = await user_service.get_user_match_details(
+        identifier=user_identifier,
+        match_identifier=match_identifier,
+    )
+    return ApiResponse.success_response(
+        data=match_data,
+        message="Match details retrieved successfully",
+    )
+

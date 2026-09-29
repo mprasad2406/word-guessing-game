@@ -90,9 +90,23 @@ export function formatDuration(sec) {
   if (sec == null || isNaN(sec) || sec < 0) return "—";
   const mins = Math.floor(sec / 60);
   const secs = Math.round(sec % 60);
-  if (mins > 0) return `${mins}m ${secs}s`;
+  if (mins > 0 && secs > 0) return `${mins}m ${secs}s`;
+  if (mins > 0) return `${mins}m`;
   return `${secs}s`;
 }
+
+/**
+ * Formats time limit seconds into human-readable minutes (e.g. 3000s -> "50 min").
+ */
+export function formatTimeLimit(seconds) {
+  if (!seconds || seconds <= 0) return "No Limit";
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins > 0 && secs === 0) return `${mins} min`;
+  if (mins > 0) return `${mins} min ${secs}s`;
+  return `${secs}s`;
+}
+
 
 /**
  * Calculates elapsed seconds for a specific guess attempt relative to session start.

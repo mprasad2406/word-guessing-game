@@ -97,4 +97,15 @@ export const userService = {
 
     return apiClient.get(`/api/v1/admin/users/${userIdentifier}/games?${params.toString()}`);
   },
+
+  /**
+   * Retrieve full match inspection details for a user's game session.
+   * @param {number|string} userIdentifier
+   * @param {number|string} matchIdentifier
+   * @returns {Promise<any>}
+   */
+  async getUserMatchDetails(userIdentifier, matchIdentifier) {
+    return apiClient.get(`/api/v1/admin/users/${userIdentifier}/matches/${matchIdentifier}`);
+  },
 };
+

@@ -2,18 +2,18 @@ import React from "react";
 
 /**
  * UserStatusIndicator:
- * Understated status indicator for user accounts:
- * - Active: Small green dot with "Active" text
- * - Blocked: Small muted red dot with "Blocked" text
+ * Clean, lightweight status indicator matching Word Management:
+ * - Active: Small green dot with "Active" label
+ * - Blocked: Small red dot with "Blocked" label
  */
-export function UserStatusIndicator({ isActive = true }) {
+export function UserStatusIndicator({ isActive = true, className = "" }) {
   return (
-    <span
-      className={`user-status-badge ${isActive ? "status-active" : "status-blocked"}`}
-      title={isActive ? "Account is active" : "Account is blocked"}
+    <div
+      className={`user-status-indicator-wrap ${isActive ? "is-active" : "is-blocked"} ${className}`}
+      title={isActive ? "Account is active and permitted to play" : "Account is blocked and cannot sign in"}
     >
       <span className="status-dot" aria-hidden="true" />
-      <span>{isActive ? "Active" : "Blocked"}</span>
-    </span>
+      <span className="status-label-text">{isActive ? "Active" : "Blocked"}</span>
+    </div>
   );
 }

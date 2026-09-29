@@ -200,6 +200,25 @@ export function UserManagementPage() {
     }
   };
 
+  // Stat Card Quick-Filter handler
+  const handleSelectStatFilter = (statType) => {
+    switch (statType) {
+      case "ACTIVE":
+        updateParams({ status: status === "ACTIVE" ? "ALL" : "ACTIVE", page: 1 });
+        break;
+      case "BLOCKED":
+        updateParams({ status: status === "BLOCKED" ? "ALL" : "BLOCKED", page: 1 });
+        break;
+      case "RECENT_ACTIVITY":
+        updateParams({ sort: sortBy === "recent_activity" ? "newest" : "recent_activity", page: 1 });
+        break;
+      case "TOTAL":
+      default:
+        updateParams({ status: "ALL", sort: "newest", page: 1 });
+        break;
+    }
+  };
+
   const isFiltered = Boolean(search.trim()) || status !== "ALL" || role !== "ALL" || sortBy !== "newest";
 
   const formatLastUpdated = (date) => {
@@ -241,8 +260,14 @@ export function UserManagementPage() {
         </div>
       </div>
 
-      {/* 2. Overview Summary Cards */}
-      <UserStats stats={overviewStats} isLoading={isLoadingStats} />
+      {/* 2. Overview Summary Cards (Clickable Quick Filters) */}
+      <UserStats
+        stats={overviewStats}
+        isLoading={isLoadingStats}
+        statusFilter={status}
+        sortBy={sortBy}
+        onSelectStatFilter={handleSelectStatFilter}
+      />
 
       {/* 3. Filter Toolbar */}
       <UserFilters

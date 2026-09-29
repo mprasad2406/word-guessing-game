@@ -1,11 +1,15 @@
 import React from "react";
-import { Search, X, Filter, RotateCcw } from "lucide-react";
+import { Search, X, RotateCcw, ArrowUpDown } from "lucide-react";
 
 /**
  * WordFilterToolbar:
- * Structured search and filter bar for the word management table.
- * Contains dominant search input, status filter, difficulty filter, active filter indicators,
- * and clear filters action.
+ * Compact search, filter, and sorting toolbar for Word Management:
+ * - Search by word or clue with clear button
+ * - Status dropdown (All, Available, Inactive)
+ * - Difficulty dropdown (All, Easy, Medium, Hard)
+ * - Sort dropdown (A-Z, Z-A, Difficulty, Newest, Oldest)
+ * - Clear Filters action
+ * - Active filter chips with quick dismiss
  */
 export function WordFilterToolbar({
   searchTerm = "",
@@ -14,20 +18,22 @@ export function WordFilterToolbar({
   onStatusChange,
   difficultyFilter = "ALL",
   onDifficultyChange,
+  sortBy = "alphabetical_asc",
+  onSortChange,
   onClearFilters,
   totalMatching = 0,
   isLoading = false,
 }) {
   const isFiltered =
-    Boolean(searchTerm) || statusFilter !== "ALL" || difficultyFilter !== "ALL";
-
-  const activeFiltersCount =
-    (statusFilter !== "ALL" ? 1 : 0) + (difficultyFilter !== "ALL" ? 1 : 0);
+    Boolean(searchTerm) ||
+    statusFilter !== "ALL" ||
+    difficultyFilter !== "ALL" ||
+    (sortBy && sortBy !== "alphabetical_asc" && sortBy !== "id_desc");
 
   return (
     <div className="word-toolbar-card" role="search" aria-label="Word search and filters">
       <div className="word-toolbar-row">
-        {/* Dominant Search Input */}
+        {/* 1. Search Input */}
         <div className="word-search-wrapper">
           <Search size={15} className="search-icon" aria-hidden="true" />
           <input
@@ -53,7 +59,7 @@ export function WordFilterToolbar({
           )}
         </div>
 
-        {/* Filter Controls Group */}
+        {/* 2. Filter & Sort Controls Group */}
         <div className="word-filters-group">
           {/* Status Filter */}
           <div className={`filter-select-wrapper ${statusFilter !== "ALL" ? "filter-active" : ""}`}>
@@ -68,7 +74,7 @@ export function WordFilterToolbar({
               disabled={isLoading}
             >
               <option value="ALL">All Statuses</option>
-              <option value="ACTIVE">Active Only</option>
+              <option value="ACTIVE">Available Only</option>
               <option value="INACTIVE">Inactive Only</option>
             </select>
           </div>
@@ -92,6 +98,28 @@ export function WordFilterToolbar({
             </select>
           </div>
 
+          {/* Sort Selector */}
+          {onSortChange && (
+            <div className="filter-select-wrapper">
+              <label htmlFor="word-sort-select" className="visually-hidden">
+                Sort words by
+              </label>
+              <select
+                id="word-sort-select"
+                className="word-filter-select"
+                value={sortBy}
+                onChange={(e) => onSortChange(e.target.value)}
+                disabled={isLoading}
+              >
+                <option value="alphabetical_asc">Alphabetical (A–Z)</option>
+                <option value="alphabetical_desc">Alphabetical (Z–A)</option>
+                <option value="difficulty">Difficulty Level</option>
+                <option value="newest">Newest Added</option>
+                <option value="oldest">Oldest Added</option>
+              </select>
+            </div>
+          )}
+
           {/* Clear Filters Button */}
           {isFiltered && (
             <button
@@ -103,15 +131,58 @@ export function WordFilterToolbar({
             >
               <RotateCcw size={13} />
               <span>Clear</span>
-              {activeFiltersCount > 0 && (
-                <span className="clear-filter-count">({activeFiltersCount})</span>
-              )}
             </button>
           )}
         </div>
       </div>
 
-      {/* Matching Count Strip */}
+      {/* 3. Filter Chips (Rendered only when filters are active) */}
+      {isFiltered && (
+        <div className="word-filter-chips-row">
+          <span className="filter-chips-label">Active:</span>
+          {searchTerm && (
+            <span className="filter-chip">
+              <span>Search: "{searchTerm}"</span>
+              <button
+                type="button"
+                className="btn-chip-remove"
+                onClick={() => onSearchChange("")}
+                aria-label="Remove search filter"
+              >
+                <X size={11} />
+              </button>
+            </span>
+          )}
+          {statusFilter !== "ALL" && (
+            <span className="filter-chip">
+              <span>Status: {statusFilter === "ACTIVE" ? "Available" : "Inactive"}</span>
+              <button
+                type="button"
+                className="btn-chip-remove"
+                onClick={() => onStatusChange("ALL")}
+                aria-label="Remove status filter"
+              >
+                <X size={11} />
+              </button>
+            </span>
+          )}
+          {difficultyFilter !== "ALL" && (
+            <span className="filter-chip">
+              <span>Difficulty: {difficultyFilter}</span>
+              <button
+                type="button"
+                className="btn-chip-remove"
+                onClick={() => onDifficultyChange("ALL")}
+                aria-label="Remove difficulty filter"
+              >
+                <X size={11} />
+              </button>
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* 4. Matching Count Strip */}
       <div className="word-toolbar-count-row">
         <span className="matching-count-text">
           {isFiltered ? (
